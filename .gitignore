@@ -1,0 +1,10 @@
+# Wave formats
+*.fst
+*.vcd
+
+# Work library
+*.cf
+
+# ghdl outputs
+*.o
+!verification/*/*.*
