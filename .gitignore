@@ -1,10 +1,4 @@
-# Wave formats
-*.fst
-*.vcd
-
-# Work library
-*.cf
-
-# ghdl outputs
-*.o
-!verification/*/*.*
+# Everythin in verification dir, except vhdl sources and dat inputs
+verification/
+!verification/*/*.vhdl
+!verification/*/*.dat

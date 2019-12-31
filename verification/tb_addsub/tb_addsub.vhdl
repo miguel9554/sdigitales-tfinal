@@ -48,7 +48,7 @@ begin
 		);
 
 	p_read : process
-		file data_file				: text open read_mode is "verification/tb_addsub/stimulus.txt";
+		file data_file				: text open read_mode is "verification/tb_addsub/stimulus.dat";
 		variable text_line			: line;
 		variable ok					: boolean;
 		variable c_BUFFER			: character;
