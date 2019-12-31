@@ -1,4 +1,4 @@
-# Everythin in verification dir, except vhdl sources and dat inputs
-verification/
-!verification/*/*.vhdl
-!verification/*/*.dat
+# Ignoramos todo lo de verification salvo los vhdl y los dat
+verification/*/*
+!verification/tb_addsub/*.vhdl
+!verification/tb_addsub/*.dat
