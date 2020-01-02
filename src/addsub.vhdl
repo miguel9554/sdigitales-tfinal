@@ -9,14 +9,14 @@ entity addsub is
 	port (
 		a, b:	in signed( W - 1 downto 0);
 		sigma:	in std_logic;
-		output:	out signed( W - 1 downto 0)
+		result:	out signed( W - 1 downto 0)
 	);
 end entity addsub;
 
 architecture behavioral of addsub is
 begin
 
-	output	<=	a + b when (sigma = '1') else
+	result	<=	a + b when (sigma = '1') else
 			a - b;
 
 end architecture behavioral;
