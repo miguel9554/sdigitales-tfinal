@@ -135,6 +135,8 @@ begin
 		write(text_line, string'("################################")); writeline(output, text_line);
 		write(text_line, string'("                                ")); writeline(output, text_line);
 
+		wait for WAIT_TIME;
+		
 		assert false report -- este assert se pone para abortar la simulacion
 			"Fin de la simulacion" severity failure;
 
