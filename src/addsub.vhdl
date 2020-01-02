@@ -17,6 +17,6 @@ architecture behavioral of addsub is
 begin
 
 	result	<=	a + b when (sigma = '1') else
-			a - b;
+				a - b;
 
 end architecture behavioral;

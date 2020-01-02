@@ -50,6 +50,7 @@ begin
 
 	p_read : process
 	
+		-- Process variables
 		file data_file				: text open read_mode is "verification/tb_addsub/stimulus.dat";
 		variable text_line			: line;
 		variable ok					: boolean;
@@ -65,7 +66,7 @@ begin
 			
 			readline(data_file, text_line);
 
-			report "Readed line: " & text_line.all;
+			report "Reading line: " & text_line.all;
 
 			read(text_line, fSign, ok); -- Read sign
 			assert ok
