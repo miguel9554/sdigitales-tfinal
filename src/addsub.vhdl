@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity addsub is
+
 	generic (
 		W: integer := 10
 	);
@@ -11,6 +12,7 @@ entity addsub is
 		sigma:	in std_logic;
 		result:	out signed( W - 1 downto 0)
 	);
+
 end entity addsub;
 
 architecture behavioral of addsub is

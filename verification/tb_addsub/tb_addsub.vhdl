@@ -117,7 +117,7 @@ begin
 
 			wait for WAIT_TIME;
 
-			assert (sExpected_output = sActual_output) report "ERROR" severity ERROR;
+			assert (sExpected_output = sActual_output) report "ERROR: expected " & integer'image(to_integer(sExpected_output)) & ", got " & integer'image(to_integer(sActual_output)) severity ERROR;
 
 			read(text_line, c_BUFFER, ok); -- Skip expected newline
 
@@ -136,7 +136,7 @@ begin
 		write(text_line, string'("                                ")); writeline(output, text_line);
 
 		wait for WAIT_TIME;
-		
+
 		assert false report -- este assert se pone para abortar la simulacion
 			"Fin de la simulacion" severity failure;
 
