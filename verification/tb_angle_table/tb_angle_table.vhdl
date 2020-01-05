@@ -44,7 +44,7 @@ begin
 		variable text_line			: line;
 		variable ok					: boolean;
 		variable c_BUFFER			: character;
-		variable fStep				: std_logic_vector( 3 downto 0)		:= ( others => '0');
+		variable fStep				: integer;
 		variable fExpected_output	: std_logic_vector( 21 downto 0)	:= ( others => '0');
 	
 	begin
@@ -52,13 +52,12 @@ begin
 		while not endfile(data_file) loop
 			
 			readline(data_file, text_line);
-			report text_line.all;
 			 
 			read(text_line, fStep, ok); -- Read input vector
 			assert ok
 				report "Read 'step' failed for line: " & text_line.all
 				severity failure;
-			sStep		<=	unsigned(fStep);
+			sStep		<=	to_unsigned(fStep, 4);
 
 			read(text_line, c_BUFFER, ok); -- Skip expected space
 			assert ok
