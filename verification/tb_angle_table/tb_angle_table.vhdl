@@ -10,31 +10,40 @@ end entity tb_angle_table;
 architecture behavioral of tb_angle_table is
 
 	-- Constants
-	constant WIDTH		:	integer	:= 16;
+	constant ADDR_WIDTH:	integer	:= 4;
+	constant DATA_WIDTH:	integer	:= 22;
 	constant WAIT_TIME	:	time	:= 50 ns;
 
 	-- UUT (unit under test) declaration
 	component angle_table is
+		generic (
+			ADDR_WIDTH	:	integer;
+			DATA_WIDTH	:	integer
+		);
 		port (
-			step	:	in unsigned( 3 downto 0);
-			angle	:	out unsigned( 21 downto 0)
+			step		:	in unsigned(ADDR_WIDTH-1 downto 0);
+			angle		:	out unsigned(DATA_WIDTH-1 downto 0)
 		);
 	end component angle_table;
 
 	-- Inputs
-	signal sStep			:	unsigned( 3 downto 0)	:= ( others => '0');
+	signal sStep			:	unsigned( ADDR_WIDTH-1 downto 0)	:= ( others => '0');
 
 	-- Outputs
-	signal sExpected_output	:	unsigned( 21 downto 0)	:= ( others => '0');
-	signal sActual_output	:	unsigned( 21 downto 0)	:= ( others => '0');
+	signal sExpected_output	:	unsigned( DATA_WIDTH-1 downto 0)	:= ( others => '0');
+	signal sActual_output	:	unsigned( DATA_WIDTH-1 downto 0)	:= ( others => '0');
 
 begin
 
 	-- UUT (unit under test) instantiation
 	uut: angle_table
+		generic map (
+			ADDR_WIDTH	=>	ADDR_WIDTH,
+			DATA_WIDTH	=>	DATA_WIDTH
+		)
 		port map (
-			step	=>	sStep,
-			angle 	=>	sActual_output
+			step		=>	sStep,
+			angle 		=>	sActual_output
 		);
 
 	p_read : process
@@ -45,7 +54,7 @@ begin
 		variable ok					: boolean;
 		variable c_BUFFER			: character;
 		variable fStep				: integer;
-		variable fExpected_output	: std_logic_vector( 21 downto 0)	:= ( others => '0');
+		variable fExpected_output	: std_logic_vector( DATA_WIDTH-1 downto 0)	:= ( others => '0');
 	
 	begin
 

@@ -4,17 +4,18 @@ use ieee.numeric_std.all;
 
 entity angle_table is
 
+	generic (
+		ADDR_WIDTH	:	integer	:= 4;
+		DATA_WIDTH	:	integer	:= 22
+	);
 	port (
-		step	:	in unsigned( 3 downto 0);
-		angle	:	out unsigned( 21 downto 0)
+		step		:	in unsigned(ADDR_WIDTH-1 downto 0);
+		angle		:	out unsigned(DATA_WIDTH-1 downto 0)
 	);
 
 end entity angle_table;
 
 architecture behavioral of angle_table is
-
-	constant ADDR_WIDTH:	integer	:= 4;
-	constant DATA_WIDTH:	integer	:= 22;
 
 	type rom_type is array ( 0 to 2**ADDR_WIDTH-1) of std_logic_vector(DATA_WIDTH-1 downto 0);
 
