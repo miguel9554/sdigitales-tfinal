@@ -16,11 +16,11 @@ architecture behavioral of tb_signed_shifter is
 	-- UUT (unit under test) declaration
 	component signed_shifter is
 		generic (
-			W: integer := 10
+			W				:	integer
 		);
 		port (
-			input_vector:		in signed( W - 1 downto 0);
-			shifted_vector:		out signed( W - 1 downto 0)
+			input_vector	:	in signed( W - 1 downto 0);
+			shifted_vector	:	out signed( W - 1 downto 0)
 		);
 	end component signed_shifter;
 
