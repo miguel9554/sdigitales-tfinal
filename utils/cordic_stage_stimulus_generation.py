@@ -10,9 +10,16 @@ def round(number):
 		return 0
 
 
+def overflow(number, width):
+	if -2**(width-1) <= number <= 2**(width-1)-1:
+		return False
+	else:
+		return True
+
+
 filepath = '../verification/tb_cordic_stage/stimulus.dat'
 # Number of test cases to generate
-NUMBER_OF_TESTS = 100
+NUMBER_OF_TESTS = 500
 # Deterministic seed for reproducibility
 random.seed(54)
 
@@ -35,5 +42,10 @@ with open(filepath, 'w') as fp:
 		Y = Y0 + round(X0/2) if sigma0 else Y0 - round(X0/2)
 		Z = Z0 - atan if sigma0 else Z0 + atan
 		sigma = 1 if Z >= 0 else 0
+
+		# Check for overflow
+
+		if overflow(X, WIDTH) or overflow(Y, WIDTH) or overflow(Z, ANGLE_WIDTH + 1):
+			continue
 
 		fp.write(f"{X0} {Y0} {Z0} {sigma0} {atan} {X} {Y} {Z} {sigma}\n")
