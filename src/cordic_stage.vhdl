@@ -5,11 +5,13 @@ use ieee.numeric_std.all;
 entity cordic_stage is
 
 	generic (
-		W			: integer := 10
+		W			: integer := 10;
+		ANGLE_W		: integer := 22
 	);
 	port (
 		X0, Y0, Z0	:	in signed( W - 1 downto 0);
 		sigma0		:	in std_logic;
+		atan		:	in unsigned( ANGLE_W - 1 downto 0);
 		X, Y, Z		:	out signed( W - 1 downto 0);
 		sigma		:	out std_logic
 	);
@@ -21,7 +23,7 @@ architecture behavioral of cordic_stage is
 	-- Adder-substractor declaration
 	component addsub is
 		generic (
-			W		: integer := 10
+			W		: integer
 		);
 		port (
 			a, b	:	in signed( W - 1 downto 0);
@@ -33,7 +35,7 @@ architecture behavioral of cordic_stage is
 	-- Shifter declaration
 	component signed_shifter is
 		generic (
-			W				:	integer := 10
+			W				:	integer
 		);
 		port (
 			input_vector	:	in signed( W - 1 downto 0);
@@ -75,7 +77,7 @@ begin
 		port map (
 			a		=>	X0,
 			b 		=>	Xshifted,
-			sigma	=>	sigma,
+			sigma	=>	sigma0,
 			result	=>	X
 		);
 
@@ -87,8 +89,22 @@ begin
 		port map (
 			a		=>	Y0,
 			b 		=>	Yshifted,
-			sigma	=>	sigma,
+			sigma	=>	sigma0,
 			result	=>	Y
 		);
+
+	-- Adder-substractor for Z component
+	Zaddsub: addsub
+		generic map (
+			W		=>	W
+		)
+		port map (
+			a		=>	Z0,
+			b 		=>	atan,
+			sigma	=>	sigma0,
+			result	=>	Z
+		);
+
+	sigma	<=	Z( W - 1 );
 
 end architecture behavioral;
