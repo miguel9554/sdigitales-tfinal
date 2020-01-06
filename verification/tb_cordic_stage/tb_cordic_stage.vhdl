@@ -12,19 +12,22 @@ architecture behavioral of tb_cordic_stage is
 	-- Constants
 	constant WIDTH			:	integer	:= 10;
 	constant ANGLE_WIDTH	:	integer	:= 22;
+	constant STEP_WIDTH		:	integer	:= 4;
 	constant WAIT_TIME		:	time	:= 50 ns;
 
 	-- UUT (unit under test) declaration
 	component cordic_stage is
 		generic (
 			W			: integer;
-			ANGLE_W		: integer
+			ANGLE_W		: integer;
+			STEP_W      : integer
 		);
 		port (
 			X0, Y0		:	in signed( W - 1 downto 0);
 			Z0			:	in signed( ANGLE_W downto 0);
 			sigma0		:	in std_logic;
 			atan		:	in unsigned( ANGLE_W - 1 downto 0);
+			step		:	in unsigned( STEP_W - 1 downto 0);
 			X, Y		:	out signed( W - 1 downto 0);
 			Z			:	out signed( ANGLE_W downto 0);
 			sigma		:	out std_logic
@@ -32,19 +35,20 @@ architecture behavioral of tb_cordic_stage is
 	end component cordic_stage;
 
 	-- Inputs
-	signal sX0		:	signed( WIDTH - 1 downto 0)			:= ( others => '0');
-	signal sY0		:	signed( WIDTH - 1 downto 0)			:= ( others => '0');
-	signal sZ0		:	signed( ANGLE_WIDTH downto 0)		:= ( others => '0');
+	signal sX0		:	signed( WIDTH - 1 downto 0)			:= (others => '0');
+	signal sY0		:	signed( WIDTH - 1 downto 0)			:= (others => '0');
+	signal sZ0		:	signed( ANGLE_WIDTH downto 0)		:= (others => '0');
 	signal sSigma0	:	std_logic							:= '0';
-	signal sAtan	:	unsigned( ANGLE_WIDTH - 1 downto 0)	:= ( others => '0');
+	signal sAtan	:	unsigned( ANGLE_WIDTH - 1 downto 0)	:= (others => '0');
+	signal sStep	:	unsigned( STEP_WIDTH - 1 downto 0)	:= (others => '0');
 
 	-- Outputs
-	signal sExpectedX		:	signed( WIDTH - 1 downto 0)		:= ( others => '0');
-	signal sActualX			:	signed( WIDTH - 1 downto 0)		:= ( others => '0');
-	signal sExpectedY		:	signed( WIDTH - 1 downto 0)		:= ( others => '0');
-	signal sActualY			:	signed( WIDTH - 1 downto 0)		:= ( others => '0');
-	signal sExpectedZ		:	signed( ANGLE_WIDTH downto 0)	:= ( others => '0');
-	signal sActualZ			:	signed( ANGLE_WIDTH downto 0)	:= ( others => '0');
+	signal sExpectedX		:	signed( WIDTH - 1 downto 0)		:= (others => '0');
+	signal sActualX			:	signed( WIDTH - 1 downto 0)		:= (others => '0');
+	signal sExpectedY		:	signed( WIDTH - 1 downto 0)		:= (others => '0');
+	signal sActualY			:	signed( WIDTH - 1 downto 0)		:= (others => '0');
+	signal sExpectedZ		:	signed( ANGLE_WIDTH downto 0)	:= (others => '0');
+	signal sActualZ			:	signed( ANGLE_WIDTH downto 0)	:= (others => '0');
 	signal sExpectedSigma	:	std_logic						:= '0';
 	signal sActualSigma		:	std_logic						:= '0';
 
@@ -60,7 +64,8 @@ begin
 	uut: cordic_stage
 		generic map (
 			W			=>	WIDTH,
-			ANGLE_W		=>	ANGLE_WIDTH
+			ANGLE_W		=>	ANGLE_WIDTH,
+			STEP_W		=>	STEP_WIDTH
 		)
 		port map (
 			X0			=>	sX0,
@@ -68,6 +73,7 @@ begin
 			Z0			=>	sZ0,
 			sigma0 		=>	sSigma0,
 			atan		=>	sAtan,
+			step		=>	sStep,
 			X			=>	sActualX,
 			Y			=>	sActualY,
 			Z			=>	sActualZ,
@@ -88,6 +94,7 @@ begin
 		variable fZ0		:	integer;
 		variable fSigma0	:	integer;
 		variable fAtan		:	integer;
+		variable fStep		:	integer;
 
 		-- Outputs to read from file
 		variable fExpectedX		:	integer;
@@ -160,6 +167,22 @@ begin
 				report "Read 'Atan' failed for line: " & text_line.all
 				severity failure;
 			sAtan		<=	to_unsigned(fAtan, ANGLE_WIDTH);
+
+			read(text_line, c_BUFFER, ok); -- Skip expected space
+			assert ok
+				report "Read space separator failed for line: " & text_line.all
+				severity failure;
+
+			read(text_line, fStep, ok); -- Read Atan
+			assert ok
+				report "Read 'Step' failed for line: " & text_line.all
+				severity failure;
+			sStep		<=	to_unsigned(fStep, sStep'length);				
+
+			read(text_line, c_BUFFER, ok); -- Skip expected space
+			assert ok
+				report "Read space separator failed for line: " & text_line.all
+				severity failure;							
 
 
 			-- READ OUTPUTS

@@ -6,13 +6,15 @@ entity cordic_stage is
 
 	generic (
 		W			: integer := 10;
-		ANGLE_W		: integer := 22
+		ANGLE_W		: integer := 22;
+		STEP_W		: integer := 4
 	);
 	port (
 		X0, Y0		:	in signed( W - 1 downto 0);
 		Z0			:	in signed( ANGLE_W downto 0);
 		sigma0		:	in std_logic;
 		atan		:	in unsigned( ANGLE_W - 1 downto 0);
+		step		:	in unsigned( STEP_W - 1 downto 0);
 		X, Y		:	out signed( W - 1 downto 0);
 		Z			:	out signed( ANGLE_W downto 0);
 		sigma		:	out std_logic
@@ -37,10 +39,12 @@ architecture behavioral of cordic_stage is
 	-- Shifter declaration
 	component signed_shifter is
 		generic (
-			W				:	integer
+			W				:	integer;
+			POSITIONS_W		:	integer
 		);
 		port (
 			input_vector	:	in signed( W - 1 downto 0);
+			shift_positions	:	in unsigned( POSITIONS_W - 1 downto 0 );
 			shifted_vector	:	out signed( W - 1 downto 0)
 		);
 	end component signed_shifter;
@@ -50,7 +54,7 @@ architecture behavioral of cordic_stage is
 	signal Yshifted		:	signed( W - 1 downto 0)		:= ( others => '0');
 	signal sZ			:	signed( ANGLE_W downto 0)	:= ( others => '0');
 	signal signedAtan	:	signed( ANGLE_W downto 0)	:= ( others => '0');
-    signal notSigma0    :   std_logic                   := '0';
+	signal notSigma0	:	std_logic					:= '0';
 
 begin
 
@@ -59,20 +63,24 @@ begin
     -- Shifter for X component
 	Xshifter: signed_shifter
 		generic map (
-			W				=>	W
+			W				=>	W,
+			POSITIONS_W		=>	STEP_W
 		)
 		port map (
 			input_vector	=>	X0,
+			shift_positions	=>	step,
 			shifted_vector 	=>	Xshifted
 		);
 
 	-- Shifter for Y component
 	Yshifter: signed_shifter
 		generic map (
-			W				=>	W
+			W				=>	W,
+			POSITIONS_W		=>	STEP_W
 		)
 		port map (
 			input_vector	=>	Y0,
+			shift_positions	=>	step,
 			shifted_vector 	=>	Yshifted
 		);
 
