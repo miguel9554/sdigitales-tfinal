@@ -50,10 +50,13 @@ architecture behavioral of cordic_stage is
 	signal Yshifted		:	signed( W - 1 downto 0)		:= ( others => '0');
 	signal sZ			:	signed( ANGLE_W downto 0)	:= ( others => '0');
 	signal signedAtan	:	signed( ANGLE_W downto 0)	:= ( others => '0');
+    signal notSigma0    :   std_logic                   := '0';
 
 begin
 
-	-- Shifter for X component
+	notSigma0   <=  not sigma0;
+
+    -- Shifter for X component
 	Xshifter: signed_shifter
 		generic map (
 			W				=>	W
@@ -81,7 +84,7 @@ begin
 		port map (
 			a		=>	X0,
 			b 		=>	Yshifted,
-			sigma	=>	sigma0,
+			sigma	=>	notSigma0,
 			result	=>	X
 		);
 
@@ -106,7 +109,7 @@ begin
 		port map (
 			a		=>	Z0,
 			b 		=>	signedAtan,
-			sigma	=>	sigma0,
+			sigma	=>	notSigma0,
 			result	=>	sZ
 		);
 
