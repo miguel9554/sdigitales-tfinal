@@ -19,7 +19,7 @@ def overflow(number, width):
 
 filepath = '../verification/tb_cordic_stage/stimulus.dat'
 # Number of test cases to generate
-NUMBER_OF_TESTS = 500
+NUMBER_OF_TESTS = 10000
 # Deterministic seed for reproducibility
 random.seed(54)
 
