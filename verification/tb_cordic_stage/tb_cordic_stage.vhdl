@@ -48,6 +48,12 @@ architecture behavioral of tb_cordic_stage is
 	signal sExpectedSigma	:	std_logic						:= '0';
 	signal sActualSigma		:	std_logic						:= '0';
 
+	-- Error counts
+	signal sXerrors		:	integer	:= 0;
+	signal sYerrors		:	integer	:= 0;
+	signal sZerrors		:	integer	:= 0;
+	signal sSigmaErrors	:	integer	:= 0;
+
 begin
 
 	-- UUT (unit under test) instantiation
@@ -201,9 +207,21 @@ begin
 			wait for WAIT_TIME;
 
 			assert (sExpectedX		= sActualX)		report "ERROR (X): expected " & integer'image(to_integer(sExpectedX))		& ", got " & integer'image(to_integer(sActualX))		severity ERROR;
+			if (sExpectedX /= sActualX) then
+				sXerrors	<=	sXerrors + 1;
+			end if;
 			assert (sExpectedY		= sActualY)		report "ERROR (Y): expected " & integer'image(to_integer(sExpectedY))		& ", got " & integer'image(to_integer(sActualY))		severity ERROR;
+			if (sExpectedY /= sActualY) then
+				sYerrors	<=	sYerrors + 1;
+			end if;
 			assert (sExpectedZ		= sActualZ)		report "ERROR (Z): expected " & integer'image(to_integer(sExpectedZ))		& ", got " & integer'image(to_integer(sActualZ))		severity ERROR;
+			if (sExpectedZ /= sActualZ) then
+				sZerrors	<=	sZerrors + 1;
+			end if;
 			assert (sExpectedSigma	= sActualSigma)	report "ERROR (Sigma): expected " & integer'image(to_integer(unsigned'('0' & sExpectedSigma)))	& ", got " & integer'image(to_integer(unsigned'('0' & sActualSigma)))	severity ERROR;
+			if (sExpectedSigma /= sActualSigma) then
+				sSigmaErrors	<=	sSigmaErrors + 1;
+			end if;
 
 			read(text_line, c_BUFFER, ok); -- Skip expected newline
 
@@ -220,6 +238,11 @@ begin
 		write(text_line, string'("#                              #")); writeline(output, text_line);
 		write(text_line, string'("################################")); writeline(output, text_line);
 		write(text_line, string'("                                ")); writeline(output, text_line);
+
+		report "X errors: " & integer'image(sXerrors);
+		report "Y errors: " & integer'image(sYerrors);
+		report "Z errors: " & integer'image(sZerrors);
+		report "Sigma errors: " & integer'image(sSigmaErrors);
 
 		wait for WAIT_TIME; -- este wait no tiene funcion, pero si no está, pero lo ponemos porque en el waveform de salida no aparece el último time event
 
