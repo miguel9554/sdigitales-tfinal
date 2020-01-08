@@ -9,7 +9,7 @@ WLIB_NAME  = work-obj93.cf
 RUN_FLAGS = --disp-time
 RUN_FLAGS =
 
-DATA_FILES =
+DATA_FILES = $(wildcard $(VER_DIR)*/*.dat)
 
 SRC_DIRS  = ./src
 SRC_FILES = $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.vhdl))
