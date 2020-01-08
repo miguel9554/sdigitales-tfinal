@@ -26,21 +26,9 @@ architecture behavioral of cordic is
 
 	-- Types
 	type rom_type is array (0 to STAGES-1) of signed(ANGLES_WIDTH-1 downto 0);
-	type coordinates_array is array (0 to STAGES-1) of signed(COORDS_WIDTH-1 downto 0);
-	type angles_array is array (0 to STAGES-1) of signed(ANGLES_WIDTH-1 downto 0);
-	type signs_array is array (0 to STAGES-1) of std_logic;
-
-	-- Adder-substractor declaration
-	component addsub is
-		generic (
-			W		: integer
-		);
-		port (
-			a, b	:	in signed( W - 1 downto 0);
-			sigma	:	in std_logic;
-			result	:	out signed( W - 1 downto 0)
-		);
-	end component addsub;
+	type coordinates_array is array (0 to STAGES) of signed(COORDS_WIDTH-1 downto 0);
+	type angles_array is array (0 to STAGES) of signed(ANGLES_WIDTH-1 downto 0);
+	type signs_array is array (0 to STAGES) of std_logic;
 
 	-- Cordic stage declaration
 	component cordic_stage is
@@ -86,52 +74,16 @@ architecture behavioral of cordic is
 	signal sY_array		:	coordinates_array	:= (others => to_signed(0,COORDS_WIDTH));
 	signal sZ_array		:	angles_array		:= (others => to_signed(0,ANGLES_WIDTH));
 	signal sSigma_array	:	signs_array			:= (others => '0');
-	signal sSigma_first	:	std_logic			:= '0';
-	signal sNotSigma_first	:	std_logic			:= '0';
 
 begin
+	
+	-- Inputs initialization
+	sX_array(0)		<=	X0;
+	sY_array(0)		<=	Y0;
+	sZ_array(0)		<=	angle;
+	sSigma_array(0)	<=	not angle(ANGLES_WIDTH-1);
 
-	sSigma_first	<=	not angle(ANGLES_WIDTH-1);
-	sNotSigma_first	<=	not sSigma_first;
-	-- Adder-substractor for first stage X component
-	Xaddsub: addsub
-		generic map (
-			W		=>	COORDS_WIDTH
-		)
-		port map (
-			a		=>	X0,
-			b 		=>	Y0,
-			sigma	=>	sNotSigma_first,
-			result	=>	sX_array(0)
-		);
-
-	-- Adder-substractor for first stage Y component
-	Yaddsub: addsub
-		generic map (
-			W		=>	COORDS_WIDTH
-		)
-		port map (
-			a		=>	Y0,
-			b 		=>	X0,
-			sigma	=>	sSigma_first,
-			result	=>	sY_array(0)
-		);
-
-	-- Adder-substractor for first stage Z component
-	Zaddsub: addsub
-		generic map (
-			W		=>	ANGLES_WIDTH
-		)
-		port map (
-			a 		=>	angle,
-			b		=>	STEP2ANGLE_ROM(0),
-			sigma	=>	sNotSigma_first,
-			result	=>	sZ_array(0)
-		);
-
-	sSigma_array(0)	<=	not sZ_array(0)(ANGLES_WIDTH-1);
-
-	stages_instantiation: for i in 1 to STAGES-1 generate
+	stages_instantiation: for i in 0 to STAGES-1 generate
 
 		current_cordic_stage: cordic_stage
 			generic map (
@@ -140,21 +92,22 @@ begin
 				STEP_W		=>	STEP_WIDTH
 			)
 			port map (
-				X0			=>	sX_array(i-1),
-				Y0			=>	sY_array(i-1),
-				Z0			=>	sZ_array(i-1),
-				sigma0 		=>	sSigma_array(i-1),
+				X0			=>	sX_array(i),
+				Y0			=>	sY_array(i),
+				Z0			=>	sZ_array(i),
+				sigma0 		=>	sSigma_array(i),
 				atan		=>	STEP2ANGLE_ROM(i),
 				step		=>	to_unsigned(i, STEP_WIDTH),
-				X			=>	sX_array(i),
-				Y			=>	sY_array(i),
-				Z			=>	sZ_array(i),
-				sigma 		=>	sSigma_array(i)
+				X			=>	sX_array(i+1),
+				Y			=>	sY_array(i+1),
+				Z			=>	sZ_array(i+1),
+				sigma 		=>	sSigma_array(i+1)
 			);
 		
 	end generate stages_instantiation;
 
-	X	<=	sX_array(STAGES-1);
-	Y	<=	sY_array(STAGES-1);
+	-- Outputs assignment
+	X	<=	sX_array(STAGES);
+	Y	<=	sY_array(STAGES);
 
 end architecture behavioral;
