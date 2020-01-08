@@ -10,7 +10,7 @@ end entity tb_cordic;
 architecture behavioral of tb_cordic is
 
 	-- Constants
-	constant COORDS_WIDTH	:	integer	:= 10;
+	constant COORDS_WIDTH	:	integer	:= 33;
 	constant ANGLES_WIDTH	:	integer	:= 22;
 	constant STAGES			:	integer	:= 16;
 	constant WAIT_TIME		:	time	:= 50 ns;
@@ -153,16 +153,19 @@ begin
 
 			wait for WAIT_TIME;
 
-			assert (sExpectedX		= sActualX)		report "ERROR (X): expected " & integer'image(to_integer(sExpectedX))		& ", got " & integer'image(to_integer(sActualX))		severity ERROR;
+			assert (sExpectedX = sActualX)		report "ERROR (X): expected " & integer'image(to_integer(sExpectedX))		& ", got " & integer'image(to_integer(sActualX))		severity ERROR;
 			if (sExpectedX /= sActualX) then
 				sXerrors	<=	sXerrors + 1;
-			end if;
-			assert (sExpectedY		= sActualY)		report "ERROR (Y): expected " & integer'image(to_integer(sExpectedY))		& ", got " & integer'image(to_integer(sActualY))		severity ERROR;
+			end if;			
+			
+			assert (sExpectedY = sActualY)		report "ERROR (Y): expected " & integer'image(to_integer(sExpectedY))		& ", got " & integer'image(to_integer(sActualY))		severity ERROR;
 			if (sExpectedY /= sActualY) then
 				sYerrors	<=	sYerrors + 1;
 			end if;
 
 		end loop;
+
+		wait for WAIT_TIME; -- This wait has no function, it's here just to avoid the bug of last errors not being accounted
 
 		write(text_line, string'("                                ")); writeline(output, text_line);
 		write(text_line, string'("################################")); writeline(output, text_line);
