@@ -11,12 +11,12 @@ entity cordic_stage is
 	);
 	port (
 		X0, Y0		:	in signed( W - 1 downto 0);
-		Z0			:	in signed( ANGLE_W downto 0);
+		Z0			:	in signed( ANGLE_W - 1 downto 0);
 		sigma0		:	in std_logic;
-		atan		:	in signed( ANGLE_W downto 0);
+		atan		:	in signed( ANGLE_W - 1 downto 0);
 		step		:	in unsigned( STEP_W - 1 downto 0);
 		X, Y		:	out signed( W - 1 downto 0);
-		Z			:	out signed( ANGLE_W downto 0);
+		Z			:	out signed( ANGLE_W - 1 downto 0);
 		sigma		:	out std_logic
 	);
 
@@ -50,14 +50,14 @@ architecture behavioral of cordic_stage is
 	end component signed_shifter;
 
 	-- Buffer signals
-	signal Xshifted		:	signed( W - 1 downto 0)		:= ( others => '0');
-	signal Yshifted		:	signed( W - 1 downto 0)		:= ( others => '0');
-	signal sZ			:	signed( ANGLE_W downto 0)	:= ( others => '0');
-	signal notSigma0	:	std_logic					:= '0';
+	signal Xshifted		:	signed( W - 1 downto 0)			:= ( others => '0');
+	signal Yshifted		:	signed( W - 1 downto 0)			:= ( others => '0');
+	signal sZ			:	signed( ANGLE_W - 1 downto 0)	:= ( others => '0');
+	signal sNotSigma0	:	std_logic						:= '0';
 
 begin
 
-	notSigma0   <=  not sigma0;
+	sNotSigma0   <=  not sigma0;
 
     -- Shifter for X component
 	Xshifter: signed_shifter
@@ -91,7 +91,7 @@ begin
 		port map (
 			a		=>	X0,
 			b 		=>	Yshifted,
-			sigma	=>	notSigma0,
+			sigma	=>	sigma0,
 			result	=>	X
 		);
 
@@ -103,23 +103,23 @@ begin
 		port map (
 			a		=>	Y0,
 			b 		=>	Xshifted,
-			sigma	=>	sigma0,
+			sigma	=>	sNotSigma0,
 			result	=>	Y
 		);
 
 	-- Adder-substractor for Z component
 	Zaddsub: addsub
 		generic map (
-			W		=>	ANGLE_W + 1
+			W		=>	ANGLE_W
 		)
 		port map (
 			a		=>	Z0,
 			b 		=>	atan,
-			sigma	=>	notSigma0,
+			sigma	=>	sigma0,
 			result	=>	sZ
 		);
 
 	Z		<=	sZ;
-	sigma	<=	not sZ( ANGLE_W );
+	sigma	<=	sZ( ANGLE_W - 1 );
 
 end architecture behavioral;

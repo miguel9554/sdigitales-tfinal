@@ -11,7 +11,7 @@ architecture behavioral of tb_cordic_stage is
 
 	-- Constants
 	constant WIDTH			:	integer	:= 10;
-	constant ANGLE_WIDTH	:	integer	:= 22;
+	constant ANGLE_WIDTH	:	integer	:= 23;
 	constant STEP_WIDTH		:	integer	:= 4;
 	constant WAIT_TIME		:	time	:= 50 ns;
 
@@ -24,12 +24,12 @@ architecture behavioral of tb_cordic_stage is
 		);
 		port (
 			X0, Y0		:	in signed( W - 1 downto 0);
-			Z0			:	in signed( ANGLE_W downto 0);
+			Z0			:	in signed( ANGLE_W - 1 downto 0);
 			sigma0		:	in std_logic;
-			atan		:	in signed( ANGLE_W downto 0);
+			atan		:	in signed( ANGLE_W - 1 downto 0);
 			step		:	in unsigned( STEP_W - 1 downto 0);
 			X, Y		:	out signed( W - 1 downto 0);
-			Z			:	out signed( ANGLE_W downto 0);
+			Z			:	out signed( ANGLE_W - 1 downto 0);
 			sigma		:	out std_logic
 		);
 	end component cordic_stage;
@@ -37,22 +37,23 @@ architecture behavioral of tb_cordic_stage is
 	-- Inputs
 	signal sX0		:	signed( WIDTH - 1 downto 0)			:= (others => '0');
 	signal sY0		:	signed( WIDTH - 1 downto 0)			:= (others => '0');
-	signal sZ0		:	signed( ANGLE_WIDTH downto 0)		:= (others => '0');
+	signal sZ0		:	signed( ANGLE_WIDTH - 1 downto 0)	:= (others => '0');
 	signal sSigma0	:	std_logic							:= '0';
-	signal sAtan	:	signed( ANGLE_WIDTH downto 0)		:= (others => '0');
+	signal sAtan	:	signed( ANGLE_WIDTH - 1 downto 0)	:= (others => '0');
 	signal sStep	:	unsigned( STEP_WIDTH - 1 downto 0)	:= (others => '0');
 
 	-- Outputs
-	signal sExpectedX		:	signed( WIDTH - 1 downto 0)		:= (others => '0');
-	signal sActualX			:	signed( WIDTH - 1 downto 0)		:= (others => '0');
-	signal sExpectedY		:	signed( WIDTH - 1 downto 0)		:= (others => '0');
-	signal sActualY			:	signed( WIDTH - 1 downto 0)		:= (others => '0');
-	signal sExpectedZ		:	signed( ANGLE_WIDTH downto 0)	:= (others => '0');
-	signal sActualZ			:	signed( ANGLE_WIDTH downto 0)	:= (others => '0');
-	signal sExpectedSigma	:	std_logic						:= '0';
-	signal sActualSigma		:	std_logic						:= '0';
+	signal sExpectedX		:	signed( WIDTH - 1 downto 0)			:= (others => '0');
+	signal sActualX			:	signed( WIDTH - 1 downto 0)			:= (others => '0');
+	signal sExpectedY		:	signed( WIDTH - 1 downto 0)			:= (others => '0');
+	signal sActualY			:	signed( WIDTH - 1 downto 0)			:= (others => '0');
+	signal sExpectedZ		:	signed( ANGLE_WIDTH - 1 downto 0)	:= (others => '0');
+	signal sActualZ			:	signed( ANGLE_WIDTH - 1 downto 0)	:= (others => '0');
+	signal sExpectedSigma	:	std_logic							:= '0';
+	signal sActualSigma		:	std_logic							:= '0';
 
-	-- Error counts
+	-- Reporting metrics
+	signal stotalReads	:	integer	:= 0;
 	signal sXerrors		:	integer	:= 0;
 	signal sYerrors		:	integer	:= 0;
 	signal sZerrors		:	integer	:= 0;
@@ -114,6 +115,7 @@ begin
 			end if;
 
 			report "Reading line: " & text_line.all;
+			stotalReads	<=	stotalReads + 1;
 
 			-- READ INPUTS
 
@@ -144,7 +146,7 @@ begin
 			assert ok
 				report "Read 'Z0' failed for line: " & text_line.all
 				severity failure;
-			sZ0		<=	to_signed(fZ0, ANGLE_WIDTH + 1);
+			sZ0		<=	to_signed(fZ0, sZ0'length);
 
 			read(text_line, c_BUFFER, ok); -- Skip expected space
 			assert ok
@@ -214,7 +216,7 @@ begin
 			assert ok
 				report "Read 'ExpectedZ' failed for line: " & text_line.all
 				severity failure;
-			sExpectedZ		<=	to_signed(fExpectedZ, ANGLE_WIDTH + 1);
+			sExpectedZ		<=	to_signed(fExpectedZ, sExpectedZ'length);
 
 			read(text_line, c_BUFFER, ok); -- Skip expected space
 			assert ok
@@ -250,6 +252,8 @@ begin
 
 		end loop;
 
+		wait for WAIT_TIME; -- This wait has no function, it's here just to avoid the bug of last errors not being accounted
+
 		write(text_line, string'("                                ")); writeline(output, text_line);
 		write(text_line, string'("################################")); writeline(output, text_line);
 		write(text_line, string'("#                              #")); writeline(output, text_line);
@@ -262,6 +266,7 @@ begin
 		write(text_line, string'("################################")); writeline(output, text_line);
 		write(text_line, string'("                                ")); writeline(output, text_line);
 
+		report "Total lines processed: " & integer'image(stotalReads);
 		report "X errors: " & integer'image(sXerrors);
 		report "Y errors: " & integer'image(sYerrors);
 		report "Z errors: " & integer'image(sZerrors);
