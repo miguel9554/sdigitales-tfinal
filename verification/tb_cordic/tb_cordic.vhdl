@@ -10,21 +10,24 @@ end entity tb_cordic;
 architecture behavioral of tb_cordic is
 
 	-- Constants
-	constant COORDS_WIDTH	:	integer	:= 33;
-	constant ANGLES_WIDTH	:	integer	:= 22;
-	constant STAGES			:	integer	:= 16;
-	constant WAIT_TIME		:	time	:= 50 ns;
+	constant COORDS_WIDTH				:	integer	:= 33;
+	constant ANGLES_INTEGER_WIDTH		:	integer	:= 6;
+	constant ANGLES_FRACTIONAL_WIDTH	:	integer	:= 16;
+	constant ANGLES_WIDTH				:	integer := ANGLES_FRACTIONAL_WIDTH+ANGLES_INTEGER_WIDTH+1;
+	constant STAGES						:	integer	:= 16;
+	constant WAIT_TIME					:	time	:= 50 ns;
 
 	-- UUT (unit under test) declaration
 	component cordic is
 		generic (
-			COORDS_WIDTH	: integer;
-			ANGLES_WIDTH	: integer;
-			STAGES			: integer
+			COORDS_WIDTH			: integer;
+			ANGLES_INTEGER_WIDTH	: integer;
+			ANGLES_FRACTIONAL_WIDTH	: integer;
+			STAGES					: integer
 		);
 		port (
 			X0, Y0			:	in signed(COORDS_WIDTH-1 downto 0);
-			angle			:	in signed(ANGLES_WIDTH downto 0);
+			angle			:	in signed(ANGLES_FRACTIONAL_WIDTH+ANGLES_INTEGER_WIDTH downto 0);
 			X, Y			:	out signed(COORDS_WIDTH-1 downto 0)
 		);
 	end component cordic;
@@ -32,7 +35,7 @@ architecture behavioral of tb_cordic is
 	-- Inputs
 	signal sX0		:	signed(COORDS_WIDTH-1 downto 0)		:= (others => '0');
 	signal sY0		:	signed(COORDS_WIDTH-1 downto 0)		:= (others => '0');
-	signal sAngle	:	signed(ANGLES_WIDTH downto 0)		:= (others => '0');
+	signal sAngle	:	signed(ANGLES_WIDTH-1 downto 0)		:= (others => '0');
 
 	-- Outputs
 	signal sExpectedX	:	signed(COORDS_WIDTH-1 downto 0)	:= (others => '0');
@@ -50,9 +53,10 @@ begin
 	-- UUT (unit under test) instantiation
 	uut: cordic
 		generic map (
-			COORDS_WIDTH	=>	COORDS_WIDTH,
-			ANGLES_WIDTH	=>	ANGLES_WIDTH,
-			STAGES			=>	STAGES
+			COORDS_WIDTH			=>	COORDS_WIDTH,
+			ANGLES_INTEGER_WIDTH	=>	ANGLES_INTEGER_WIDTH,
+			ANGLES_FRACTIONAL_WIDTH	=>	ANGLES_FRACTIONAL_WIDTH,
+			STAGES					=>	STAGES
 		)
 		port map (
 			X0			=>	sX0,

@@ -5,13 +5,14 @@ use ieee.numeric_std.all;
 entity cordic is
 
 	generic (
-		COORDS_WIDTH	: integer := 10;
-		ANGLES_WIDTH	: integer := 22;
-		STAGES			: integer := 16
+		COORDS_WIDTH			: integer := 10;
+		ANGLES_INTEGER_WIDTH	: integer := 6;
+		ANGLES_FRACTIONAL_WIDTH	: integer := 16;
+		STAGES					: integer := 16
 	);
 	port (
 		X0, Y0			:	in signed(COORDS_WIDTH-1 downto 0);
-		angle			:	in signed(ANGLES_WIDTH downto 0);
+		angle			:	in signed(ANGLES_FRACTIONAL_WIDTH+ANGLES_INTEGER_WIDTH downto 0);
 		X, Y			:	out signed(COORDS_WIDTH-1 downto 0)
 	);
 
@@ -19,10 +20,14 @@ end entity cordic;
 
 architecture behavioral of cordic is
 
+	-- Constants
+	constant STEP_WIDTH 	: 	integer := 4;
+	constant ANGLES_WIDTH 	:	integer := ANGLES_INTEGER_WIDTH+ANGLES_FRACTIONAL_WIDTH+1; 
+
 	-- Types
-	type rom_type is array (0 to STAGES-1) of signed(ANGLES_WIDTH downto 0);
+	type rom_type is array (0 to STAGES-1) of signed(ANGLES_WIDTH-1 downto 0);
 	type coordinates_array is array (0 to STAGES-1) of signed(COORDS_WIDTH-1 downto 0);
-	type angles_array is array (0 to STAGES-1) of signed(ANGLES_WIDTH downto 0);
+	type angles_array is array (0 to STAGES-1) of signed(ANGLES_WIDTH-1 downto 0);
 	type signs_array is array (0 to STAGES-1) of std_logic;
 
 	-- Adder-substractor declaration
@@ -56,8 +61,7 @@ architecture behavioral of cordic is
 		);
 	end component cordic_stage;
 
-	-- Constants
-	constant STEP_WIDTH : integer := 4;
+	-- Angles "ROM"
 	constant STEP2ANGLE_ROM: rom_type := (
 		"01011010000000000000000",	-- 45°
 		"00110101001000010100111",	-- 26.565051177078°
@@ -80,7 +84,7 @@ architecture behavioral of cordic is
 	-- Buffer signals
 	signal sX_array		:	coordinates_array	:= (others => to_signed(0,COORDS_WIDTH));
 	signal sY_array		:	coordinates_array	:= (others => to_signed(0,COORDS_WIDTH));
-	signal sZ_array		:	angles_array		:= (others => to_signed(0,ANGLES_WIDTH+1));
+	signal sZ_array		:	angles_array		:= (others => to_signed(0,ANGLES_WIDTH));
 	signal sSigma_array	:	signs_array			:= (others => '0');
 
 begin
@@ -112,7 +116,7 @@ begin
 	-- Adder-substractor for first stage Z component
 	Zaddsub: addsub
 		generic map (
-			W		=>	ANGLES_WIDTH + 1
+			W		=>	ANGLES_WIDTH
 		)
 		port map (
 			a 		=>	angle,
@@ -121,14 +125,14 @@ begin
 			result	=>	sZ_array(0)
 		);
 
-	sSigma_array(0)	<=	not sZ_array(0)(ANGLES_WIDTH);
+	sSigma_array(0)	<=	not sZ_array(0)(ANGLES_WIDTH-1);
 
 	stages_instantiation: for i in 1 to STAGES-1 generate
 
 		current_cordic_stage: cordic_stage
 			generic map (
 				W			=>	COORDS_WIDTH,
-				ANGLE_W		=>	ANGLES_WIDTH,
+				ANGLE_W		=>	ANGLES_WIDTH-1,
 				STEP_W		=>	STEP_WIDTH
 			)
 			port map (
@@ -146,7 +150,7 @@ begin
 		
 	end generate stages_instantiation;
 
-	X	<=	sX_array(15);
-	Y	<=	sY_array(15);
+	X	<=	sX_array(STAGES-1);
+	Y	<=	sY_array(STAGES-1);
 
 end architecture behavioral;
