@@ -31,24 +31,30 @@ all:
 	@echo
 
 
+# Genera la work library
 $(TBS_WLIBS):
 	@echo "Generating WORK Library for $@"
 	@cd $(dir $@) && \
 	 	ghdl -i $(GHDL_OPTIONS) *.vhdl $(SRC_REL_FILES)
 
 
+# Esta regla nos dice que los ejecutables dependen del vhdl que está en la carpeta del TB (verification/TB),
+# de WLIB (la librería work, está en la carpeta del testbench) y de todos los archivos fuente
 .SECONDEXPANSION:
 $(TBS_EXE) : % : %.vhdl $$(dir $$@)$(WLIB_NAME) $(SRC_FILES)
 	@cd $(dir $@) && \
 		ghdl -m $(GHDL_OPTIONS) $(notdir $@)
 
 
+# Esta regla nos dicen que los waves dependen del ejecutable verification/TESTBENCH/TESTBENCH y de los data files
+# Después, llama al ejecutable pasando como parámetros el nombre de salida del waveform y los run flags
 .SECONDEXPANSION:
 $(TBS_WAVES): $(VER_DIR)%/waves.$(WOF) : $$(subst waves.$$(WOF),,$$@)% $(DATA_FILES)
 	$< --$(WOF)=$@ $(RUN_FLAGS)
 	@echo "File $< Updated! (Reload Waveform)"
 
 
+# Esta regla nos dice que los testbench dependen de verification/TESTBENCH/wave.WOF
 $(TBS): % : $(VER_DIR)%/waves.$(WOF)
 	@echo "Done $@!"
 
