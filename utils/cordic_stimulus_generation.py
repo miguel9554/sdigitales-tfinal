@@ -42,13 +42,13 @@ atan = [45,
 
 with open(filepath, 'w') as fp:
 
-	fp.write("# X0 Y0 angle X Y Xreal Yreal\n")
+	fp.write("# X0 Y0 angle X Y\n")
 
 	for _ in range(NUMBER_OF_TESTS):
 
 		X0 = random.randint(-2**(WIDTH-1), 2**(WIDTH-1)-1)
 		Y0 = random.randint(-2**(WIDTH-1), 2**(WIDTH-1)-1)
-		angle = random.randint(0, 20)
+		angle = random.randint(0, 90)
 
 		X_old = X0
 		Y_old = Y0
