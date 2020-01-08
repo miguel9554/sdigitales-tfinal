@@ -26,7 +26,7 @@ architecture behavioral of tb_cordic_stage is
 			X0, Y0		:	in signed( W - 1 downto 0);
 			Z0			:	in signed( ANGLE_W downto 0);
 			sigma0		:	in std_logic;
-			atan		:	in unsigned( ANGLE_W - 1 downto 0);
+			atan		:	in signed( ANGLE_W downto 0);
 			step		:	in unsigned( STEP_W - 1 downto 0);
 			X, Y		:	out signed( W - 1 downto 0);
 			Z			:	out signed( ANGLE_W downto 0);
@@ -39,7 +39,7 @@ architecture behavioral of tb_cordic_stage is
 	signal sY0		:	signed( WIDTH - 1 downto 0)			:= (others => '0');
 	signal sZ0		:	signed( ANGLE_WIDTH downto 0)		:= (others => '0');
 	signal sSigma0	:	std_logic							:= '0';
-	signal sAtan	:	unsigned( ANGLE_WIDTH - 1 downto 0)	:= (others => '0');
+	signal sAtan	:	signed( ANGLE_WIDTH downto 0)		:= (others => '0');
 	signal sStep	:	unsigned( STEP_WIDTH - 1 downto 0)	:= (others => '0');
 
 	-- Outputs
@@ -166,14 +166,14 @@ begin
 			assert ok
 				report "Read 'Atan' failed for line: " & text_line.all
 				severity failure;
-			sAtan		<=	to_unsigned(fAtan, ANGLE_WIDTH);
+			sAtan		<=	to_signed(fAtan, sAtan'length);
 
 			read(text_line, c_BUFFER, ok); -- Skip expected space
 			assert ok
 				report "Read space separator failed for line: " & text_line.all
 				severity failure;
 
-			read(text_line, fStep, ok); -- Read Atan
+			read(text_line, fStep, ok); -- Read Step
 			assert ok
 				report "Read 'Step' failed for line: " & text_line.all
 				severity failure;

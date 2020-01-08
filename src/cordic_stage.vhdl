@@ -13,7 +13,7 @@ entity cordic_stage is
 		X0, Y0		:	in signed( W - 1 downto 0);
 		Z0			:	in signed( ANGLE_W downto 0);
 		sigma0		:	in std_logic;
-		atan		:	in unsigned( ANGLE_W - 1 downto 0);
+		atan		:	in signed( ANGLE_W downto 0);
 		step		:	in unsigned( STEP_W - 1 downto 0);
 		X, Y		:	out signed( W - 1 downto 0);
 		Z			:	out signed( ANGLE_W downto 0);
@@ -53,7 +53,6 @@ architecture behavioral of cordic_stage is
 	signal Xshifted		:	signed( W - 1 downto 0)		:= ( others => '0');
 	signal Yshifted		:	signed( W - 1 downto 0)		:= ( others => '0');
 	signal sZ			:	signed( ANGLE_W downto 0)	:= ( others => '0');
-	signal signedAtan	:	signed( ANGLE_W downto 0)	:= ( others => '0');
 	signal notSigma0	:	std_logic					:= '0';
 
 begin
@@ -108,7 +107,6 @@ begin
 			result	=>	Y
 		);
 
-	signedAtan	<=	signed('0' & atan);
 	-- Adder-substractor for Z component
 	Zaddsub: addsub
 		generic map (
@@ -116,7 +114,7 @@ begin
 		)
 		port map (
 			a		=>	Z0,
-			b 		=>	signedAtan,
+			b 		=>	atan,
 			sigma	=>	notSigma0,
 			result	=>	sZ
 		);
