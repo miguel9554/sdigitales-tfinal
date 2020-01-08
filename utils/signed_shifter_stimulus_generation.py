@@ -22,7 +22,7 @@ with open(filepath, 'w') as fp:
 	for _ in range(NUMBER_OF_TESTS):
 
 		input_value = random.randint(-2**(WIDTH-1), 2**(WIDTH-1)-1)
-		number_of_shifts = random.randint(1, 2**(SHIFT_WIDTH)-1)
+		number_of_shifts = random.randint(0, 2**(SHIFT_WIDTH)-1)
 
 		expected_result = round(input_value/(2**number_of_shifts))
 
