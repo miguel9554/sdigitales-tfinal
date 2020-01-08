@@ -14,8 +14,10 @@ random.seed(54)
 
 # Width, in bits, of general values
 WIDTH = 10
-# Width, in bits, of angles
-ANGLE_WIDTH = 22
+# Width, in bits, of the integer part of angles
+ANGLE_INTEGER_WIDTH = 6
+# Width, in bits, of the fractional part of angles
+ANGLE_FRACTIONAL_WIDTH = 16
 # Width, in bits, of number of shifts
 SHIFT_WIDTH = 4
 # Number of stages of the architecture
@@ -40,13 +42,13 @@ atan = [45,
 
 with open(filepath, 'w') as fp:
 
-	fp.write("# X0 Y0 angle X Y\n")
+	fp.write("# X0 Y0 angle X Y Xreal Yreal\n")
 
 	for _ in range(NUMBER_OF_TESTS):
 
 		X0 = random.randint(-2**(WIDTH-1), 2**(WIDTH-1)-1)
 		Y0 = random.randint(-2**(WIDTH-1), 2**(WIDTH-1)-1)
-		angle = random.randint(-90, 90)
+		angle = random.randint(0, 20)
 
 		X_old = X0
 		Y_old = Y0
@@ -66,4 +68,4 @@ with open(filepath, 'w') as fp:
 			Z_old = Z
 			sigma_old = sigma
 
-		fp.write(f"{X0} {Y0} {angle} {X} {Y}\n")
+		fp.write(f"{X0} {Y0} {angle*2**ANGLE_FRACTIONAL_WIDTH} {X} {Y}\n")
