@@ -124,7 +124,7 @@ begin
 			assert ok
 				report "Read 'X0' failed for line: " & text_line.all
 				severity failure;
-			sX0		<=	to_signed(fX0, WIDTH);
+			sX0		<=	to_signed(fX0, sX0'length);
 
 			read(text_line, c_BUFFER, ok); -- Skip expected space
 			assert ok
@@ -135,7 +135,7 @@ begin
 			assert ok
 				report "Read 'Y0' failed for line: " & text_line.all
 				severity failure;
-			sY0		<=	to_signed(fY0, WIDTH);
+			sY0		<=	to_signed(fY0, sY0'length);
 
 			read(text_line, c_BUFFER, ok); -- Skip expected space
 			assert ok
@@ -194,7 +194,7 @@ begin
 			assert ok
 				report "Read 'ExpectedX' failed for line: " & text_line.all
 				severity failure;
-			sExpectedX		<=	to_signed(fExpectedX, WIDTH);
+			sExpectedX		<=	to_signed(fExpectedX, sExpectedX'length);
 
 			read(text_line, c_BUFFER, ok); -- Skip expected space
 			assert ok
@@ -205,7 +205,7 @@ begin
 			assert ok
 				report "Read 'ExpectedY' failed for line: " & text_line.all
 				severity failure;
-			sExpectedY		<=	to_signed(fExpectedY, WIDTH);
+			sExpectedY		<=	to_signed(fExpectedY, sExpectedY'length);
 
 			read(text_line, c_BUFFER, ok); -- Skip expected space
 			assert ok
