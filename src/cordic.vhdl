@@ -86,9 +86,13 @@ architecture behavioral of cordic is
 	signal sY_array		:	coordinates_array	:= (others => to_signed(0,COORDS_WIDTH));
 	signal sZ_array		:	angles_array		:= (others => to_signed(0,ANGLES_WIDTH));
 	signal sSigma_array	:	signs_array			:= (others => '0');
+	signal sSigma_first	:	std_logic			:= '0';
+	signal sNotSigma_first	:	std_logic			:= '0';
 
 begin
 
+	sSigma_first	<=	not angle(ANGLES_WIDTH-1);
+	sNotSigma_first	<=	not sSigma_first;
 	-- Adder-substractor for first stage X component
 	Xaddsub: addsub
 		generic map (
@@ -97,7 +101,7 @@ begin
 		port map (
 			a		=>	X0,
 			b 		=>	Y0,
-			sigma	=>	'0',
+			sigma	=>	sNotSigma_first,
 			result	=>	sX_array(0)
 		);
 
@@ -109,7 +113,7 @@ begin
 		port map (
 			a		=>	Y0,
 			b 		=>	X0,
-			sigma	=>	'1',
+			sigma	=>	sSigma_first,
 			result	=>	sY_array(0)
 		);
 
@@ -121,7 +125,7 @@ begin
 		port map (
 			a 		=>	angle,
 			b		=>	STEP2ANGLE_ROM(0),
-			sigma	=>	'0',
+			sigma	=>	sNotSigma_first,
 			result	=>	sZ_array(0)
 		);
 
