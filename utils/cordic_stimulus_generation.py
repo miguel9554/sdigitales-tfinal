@@ -12,8 +12,8 @@ NUMBER_OF_TESTS = 1000
 # Deterministic seed for reproducibility
 random.seed(54)
 
-# Width, in bits, of general values
-WIDTH = 10
+# Width, in bits, of coordinates
+COORDINATES_WIDTH = 10
 # Width, in bits, of the integer part of angles
 ANGLE_INTEGER_WIDTH = 6
 # Width, in bits, of the fractional part of angles
@@ -46,22 +46,22 @@ with open(filepath, 'w') as fp:
 
 	for _ in range(NUMBER_OF_TESTS):
 
-		X0 = random.randint(-2**(WIDTH-1), 2**(WIDTH-1)-1)
-		Y0 = random.randint(-2**(WIDTH-1), 2**(WIDTH-1)-1)
+		X0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
+		Y0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
 		angle = random.randint(-2**(ANGLE_INTEGER_WIDTH-1), 2**(ANGLE_INTEGER_WIDTH-1)-1)
 
 		X_old = X0
 		Y_old = Y0
 		Z_old = angle
-		sigma_old = 1 if angle >= 0 else 0
+		sigma_old = 0 if angle >= 0 else 1
 
 
 		for step in range(NUMBER_OF_STAGES):
 
-			X = X_old - round(Y_old/(2**step)) if sigma_old else X_old + round(Y_old/(2**step))
-			Y = Y_old + round(X_old/(2**step)) if sigma_old else Y_old - round(X_old/(2**step))
-			Z = Z_old - atan[step] if sigma_old else Z_old + atan[step]
-			sigma = 1 if Z >= 0 else 0
+			X = X_old - round(Y_old/(2**step)) if not sigma_old else X_old + round(Y_old/(2**step))
+			Y = Y_old + round(X_old/(2**step)) if not sigma_old else Y_old - round(X_old/(2**step))
+			Z = Z_old - atan[step] if not sigma_old else Z_old + atan[step]
+			sigma = 0 if Z >= 0 else 1
 
 			X_old = X
 			Y_old = Y

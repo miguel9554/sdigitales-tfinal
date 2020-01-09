@@ -22,7 +22,7 @@ architecture behavioral of cordic is
 
 	-- Constants
 	constant STEP_WIDTH 	: 	integer := 4;
-	constant ANGLES_WIDTH 	:	integer := ANGLES_INTEGER_WIDTH+ANGLES_FRACTIONAL_WIDTH+1; 
+	constant ANGLES_WIDTH 	:	integer := ANGLES_INTEGER_WIDTH+ANGLES_FRACTIONAL_WIDTH+1;
 
 	-- Types
 	type rom_type is array (0 to STAGES-1) of signed(ANGLES_WIDTH-1 downto 0);
@@ -39,12 +39,12 @@ architecture behavioral of cordic is
 		);
 		port (
 			X0, Y0		:	in signed( W - 1 downto 0);
-			Z0			:	in signed( ANGLE_W downto 0);
+			Z0			:	in signed( ANGLE_W-1 downto 0);
 			sigma0		:	in std_logic;
-			atan		:	in signed( ANGLE_W downto 0);
+			atan		:	in signed( ANGLE_W-1 downto 0);
 			step		:	in unsigned( STEP_W - 1 downto 0);
 			X, Y		:	out signed( W - 1 downto 0);
-			Z			:	out signed( ANGLE_W downto 0);
+			Z			:	out signed( ANGLE_W-1 downto 0);
 			sigma		:	out std_logic
 		);
 	end component cordic_stage;
@@ -81,14 +81,14 @@ begin
 	sX_array(0)		<=	X0;
 	sY_array(0)		<=	Y0;
 	sZ_array(0)		<=	angle;
-	sSigma_array(0)	<=	not angle(ANGLES_WIDTH-1);
+	sSigma_array(0)	<=	angle(ANGLES_WIDTH-1);
 
 	stages_instantiation: for i in 0 to STAGES-1 generate
 
 		current_cordic_stage: cordic_stage
 			generic map (
 				W			=>	COORDS_WIDTH,
-				ANGLE_W		=>	ANGLES_WIDTH-1,
+				ANGLE_W		=>	ANGLES_WIDTH,
 				STEP_W		=>	STEP_WIDTH
 			)
 			port map (
@@ -103,7 +103,7 @@ begin
 				Z			=>	sZ_array(i+1),
 				sigma 		=>	sSigma_array(i+1)
 			);
-		
+
 	end generate stages_instantiation;
 
 	-- Outputs assignment
