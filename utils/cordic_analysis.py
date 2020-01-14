@@ -5,14 +5,14 @@ import numpy as np
 
 
 def round(number):
-	return int(math.floor(number))
+    return int(math.floor(number))
 
 
 def overflow(number, width):
-	if -2**(width-1) <= number <= 2**(width-1)-1:
-		return False
-	else:
-		return True
+    if -2**(width-1) <= number <= 2**(width-1)-1:
+        return False
+    else:
+        return True
 
 
 filepath = '../verification/tb_cordic/stimulus.dat'
@@ -52,46 +52,46 @@ Y_erorr_list = []
 
 with open(filepath, 'w') as fp:
 
-	fp.write(" {X0:^5} {Y0:^5} {angle:^5} {X:^14} {Y:^14} {X_correct:^14} {Y_correct:^14} {X_error:^14} {Y_error:^14}\n".format(
-		X0='X0', Y0='Y0', angle='angle', X='X', Y='Y', X_correct='X_correct', Y_correct='Y_correct', X_error='X_error', Y_error='Y_error'))
+    fp.write(" {X0:^5} {Y0:^5} {angle:^5} {X:^14} {Y:^14} {X_correct:^14} {Y_correct:^14} {X_error:^14} {Y_error:^14}\n".format(
+        X0='X0', Y0='Y0', angle='angle', X='X', Y='Y', X_correct='X_correct', Y_correct='Y_correct', X_error='X_error', Y_error='Y_error'))
 
-	for _ in range(NUMBER_OF_TESTS):
+    for _ in range(NUMBER_OF_TESTS):
 
-		X0 = random.randint(-2**(WIDTH-1), 2**(WIDTH-1)-1)
-		Y0 = random.randint(-2**(WIDTH-1), 2**(WIDTH-1)-1)
-		angle = random.randint(-90, 90)
+        X0 = random.randint(-2**(WIDTH-1), 2**(WIDTH-1)-1)
+        Y0 = random.randint(-2**(WIDTH-1), 2**(WIDTH-1)-1)
+        angle = random.randint(-90, 90)
 
-		X_old = X0
-		Y_old = Y0
-		Z_old = angle
-		sigma_old = 1
+        X_old = X0
+        Y_old = Y0
+        Z_old = angle
+        sigma_old = 1
 
 
-		for step in range(NUMBER_OF_STAGES):
+        for step in range(NUMBER_OF_STAGES):
 
-			X = X_old - round(Y_old/(2**step)) if sigma_old else X_old + round(Y_old/(2**step))
-			Y = Y_old + round(X_old/(2**step)) if sigma_old else Y_old - round(X_old/(2**step))
-			Z = Z_old - atan[step] if sigma_old else Z_old + atan[step]
-			sigma = 1 if Z >= 0 else 0
+            X = X_old - round(Y_old/(2**step)) if sigma_old else X_old + round(Y_old/(2**step))
+            Y = Y_old + round(X_old/(2**step)) if sigma_old else Y_old - round(X_old/(2**step))
+            Z = Z_old - atan[step] if sigma_old else Z_old + atan[step]
+            sigma = 1 if Z >= 0 else 0
 
-			X_old = X
-			Y_old = Y
-			Z_old = Z
-			sigma_old = sigma
+            X_old = X
+            Y_old = Y
+            Z_old = Z
+            sigma_old = sigma
 
-		X = X*0.6072
-		Y = Y*0.6072
-		
-		X_correct = X0*math.cos(angle*math.pi/180)-Y0*math.sin(angle*math.pi/180)
-		Y_correct = X0*math.sin(angle*math.pi/180)+Y0*math.cos(angle*math.pi/180)
-		
-		X_error = abs((X_correct-X)/X_correct)*100
-		Y_error = abs((Y_correct-Y)/Y_correct)*100
+        X = X*0.6072
+        Y = Y*0.6072
+        
+        X_correct = X0*math.cos(angle*math.pi/180)-Y0*math.sin(angle*math.pi/180)
+        Y_correct = X0*math.sin(angle*math.pi/180)+Y0*math.cos(angle*math.pi/180)
+        
+        X_error = abs((X_correct-X)/X_correct)*100
+        Y_error = abs((Y_correct-Y)/Y_correct)*100
 
-		X_erorr_list.append(X_error)
-		Y_erorr_list.append(Y_error)
+        X_erorr_list.append(X_error)
+        Y_erorr_list.append(Y_error)
 
-		fp.write(f"{X0:>5} {Y0:>5} {angle:>5} {X:14.6f} {Y:14.6f} {X_correct:14.6f} {Y_correct:14.6f} {X_error:8.3f}% {Y_error:8.3f}%\n")
+        fp.write(f"{X0:>5} {Y0:>5} {angle:>5} {X:14.6f} {Y:14.6f} {X_correct:14.6f} {Y_correct:14.6f} {X_error:8.3f}% {Y_error:8.3f}%\n")
 
 # An "interface" to matplotlib.axes.Axes.hist() method
 n, bins, patches = plt.hist(x=X_erorr_list, bins=1000, alpha=1)

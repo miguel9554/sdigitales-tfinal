@@ -3,7 +3,7 @@ import math
 
 
 def round(number):
-	return int(math.floor(number))
+    return int(math.floor(number))
 
 
 filepath = '../verification/tb_cordic/stimulus.dat'
@@ -42,37 +42,37 @@ atan = [45,
 
 with open(filepath, 'w') as fp:
 
-	fp.write("# X0 Y0 angle X Y\n")
+    fp.write("# X0 Y0 angle X Y\n")
 
-	for _ in range(NUMBER_OF_TESTS):
+    for _ in range(NUMBER_OF_TESTS):
 
-		X0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
-		Y0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
-		angle = random.randint(-2**(ANGLE_INTEGER_WIDTH-1), 2**(ANGLE_INTEGER_WIDTH-1)-1)
+        X0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
+        Y0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
+        angle = random.randint(-2**(ANGLE_INTEGER_WIDTH-1), 2**(ANGLE_INTEGER_WIDTH-1)-1)
 
-		X_old = X0
-		Y_old = Y0
-		Z_old = angle
-		sigma_old = 0 if angle >= 0 else 1
+        X_old = X0
+        Y_old = Y0
+        Z_old = angle
+        sigma_old = 0 if angle >= 0 else 1
 
 
-		for step in range(NUMBER_OF_STAGES):
+        for step in range(NUMBER_OF_STAGES):
 
-			X = X_old - round(Y_old/(2**step)) if not sigma_old else X_old + round(Y_old/(2**step))
-			Y = Y_old + round(X_old/(2**step)) if not sigma_old else Y_old - round(X_old/(2**step))
-			Z = Z_old - atan[step] if not sigma_old else Z_old + atan[step]
-			sigma = 0 if Z >= 0 else 1
+            X = X_old - round(Y_old/(2**step)) if not sigma_old else X_old + round(Y_old/(2**step))
+            Y = Y_old + round(X_old/(2**step)) if not sigma_old else Y_old - round(X_old/(2**step))
+            Z = Z_old - atan[step] if not sigma_old else Z_old + atan[step]
+            sigma = 0 if Z >= 0 else 1
 
-			X_old = X
-			Y_old = Y
-			Z_old = Z
-			sigma_old = sigma
+            X_old = X
+            Y_old = Y
+            Z_old = Z
+            sigma_old = sigma
 
-		# X = int(X*0.607252935)
-		# Y = int(Y*0.607252935)
+        # X = int(X*0.607252935)
+        # Y = int(Y*0.607252935)
 
-		X_correct = (X0*math.cos(angle*math.pi/180)-Y0*math.sin(angle*math.pi/180))
-		Y_correct = (X0*math.sin(angle*math.pi/180)+Y0*math.cos(angle*math.pi/180))
+        X_correct = (X0*math.cos(angle*math.pi/180)-Y0*math.sin(angle*math.pi/180))
+        Y_correct = (X0*math.sin(angle*math.pi/180)+Y0*math.cos(angle*math.pi/180))
 
-		fp.write(f"{X0} {Y0} {angle*2**ANGLE_FRACTIONAL_WIDTH} {X} {Y} {X_correct} {Y_correct}\n")
-		# fp.write(f"{X0} {Y0} {angle*2**ANGLE_FRACTIONAL_WIDTH} {X} {Y}\n")
+        fp.write(f"{X0} {Y0} {angle*2**ANGLE_FRACTIONAL_WIDTH} {X} {Y} {X_correct} {Y_correct}\n")
+        # fp.write(f"{X0} {Y0} {angle*2**ANGLE_FRACTIONAL_WIDTH} {X} {Y}\n")
