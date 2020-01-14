@@ -8,7 +8,7 @@ def round(number):
 
 filepath = '../verification/tb_cordic/stimulus.dat'
 # Number of test cases to generate
-NUMBER_OF_TESTS = 1000
+NUMBER_OF_TESTS = 10
 # Deterministic seed for reproducibility
 random.seed(54)
 
@@ -68,8 +68,11 @@ with open(filepath, 'w') as fp:
 			Z_old = Z
 			sigma_old = sigma
 
-		X_correct = (X0*math.cos(angle*math.pi/180)-Y0*math.sin(angle*math.pi/180))/0.6072
-		Y_correct = (X0*math.sin(angle*math.pi/180)+Y0*math.cos(angle*math.pi/180))/0.6072
+		# X = int(X*0.607252935)
+		# Y = int(Y*0.607252935)
 
-		# fp.write(f"{X0} {Y0} {angle*2**ANGLE_FRACTIONAL_WIDTH} {X} {Y} {X_correct} {Y_correct}\n")
-		fp.write(f"{X0} {Y0} {angle*2**ANGLE_FRACTIONAL_WIDTH} {X} {Y}\n")
+		X_correct = (X0*math.cos(angle*math.pi/180)-Y0*math.sin(angle*math.pi/180))
+		Y_correct = (X0*math.sin(angle*math.pi/180)+Y0*math.cos(angle*math.pi/180))
+
+		fp.write(f"{X0} {Y0} {angle*2**ANGLE_FRACTIONAL_WIDTH} {X} {Y} {X_correct} {Y_correct}\n")
+		# fp.write(f"{X0} {Y0} {angle*2**ANGLE_FRACTIONAL_WIDTH} {X} {Y}\n")
