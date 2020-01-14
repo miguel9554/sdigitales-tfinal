@@ -74,5 +74,5 @@ with open(filepath, 'w') as fp:
         X_correct = (X0*math.cos(angle*math.pi/180)-Y0*math.sin(angle*math.pi/180))
         Y_correct = (X0*math.sin(angle*math.pi/180)+Y0*math.cos(angle*math.pi/180))
 
-        fp.write(f"{X0} {Y0} {angle*2**ANGLE_FRACTIONAL_WIDTH} {X} {Y} {X_correct} {Y_correct}\n")
-        # fp.write(f"{X0} {Y0} {angle*2**ANGLE_FRACTIONAL_WIDTH} {X} {Y}\n")
+        # fp.write(f"{X0} {Y0} {angle*2**ANGLE_FRACTIONAL_WIDTH} {X} {Y} {X_correct} {Y_correct}\n")
+        fp.write(f"{X0} {Y0} {angle*2**ANGLE_FRACTIONAL_WIDTH} {X} {Y}\n")
