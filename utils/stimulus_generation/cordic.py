@@ -13,7 +13,7 @@ NUMBER_OF_TESTS = 10
 random.seed(54)
 
 # Width, in bits, of coordinates
-COORDINATES_WIDTH = 10
+COORDINATES_WIDTH = 33
 # Width, in bits, of the integer part of angles
 ANGLE_INTEGER_WIDTH = 6
 # Width, in bits, of the fractional part of angles

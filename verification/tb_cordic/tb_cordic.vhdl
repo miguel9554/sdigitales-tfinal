@@ -10,7 +10,7 @@ end entity tb_cordic;
 architecture behavioral of tb_cordic is
 
     -- Constants
-    constant COORDS_WIDTH               :   integer := 33;
+    constant COORDS_WIDTH               :   integer := 35;
     constant ANGLES_INTEGER_WIDTH       :   integer := 6;
     constant ANGLES_FRACTIONAL_WIDTH    :   integer := 16;
     constant ANGLES_WIDTH               :   integer := ANGLES_FRACTIONAL_WIDTH+ANGLES_INTEGER_WIDTH+1;
