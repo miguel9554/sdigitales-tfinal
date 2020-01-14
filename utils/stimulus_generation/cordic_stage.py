@@ -13,7 +13,7 @@ def overflow(number, width):
         return True
 
 
-filepath = '../verification/tb_cordic_stage/stimulus.dat'
+filepath = '../../verification/tb_cordic_stage/stimulus.dat'
 # Number of test cases to generate
 NUMBER_OF_TESTS = 100000
 # Deterministic seed for reproducibility

@@ -89,7 +89,7 @@ begin
             
             readline(data_file, text_line);
 
-              -- Skip empty lines and single-line comments
+            -- Skip empty lines and single-line comments
             if text_line.all'length = 0 or text_line.all(1) = '#' then
                 next;
             end if;

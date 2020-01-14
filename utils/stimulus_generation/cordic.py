@@ -6,7 +6,7 @@ def round(number):
     return int(math.floor(number))
 
 
-filepath = '../verification/tb_cordic/stimulus.dat'
+filepath = '../../verification/tb_cordic/stimulus.dat'
 # Number of test cases to generate
 NUMBER_OF_TESTS = 10
 # Deterministic seed for reproducibility

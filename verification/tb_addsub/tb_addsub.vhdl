@@ -34,6 +34,10 @@ architecture behavioral of tb_addsub is
     signal sExpected_output :   signed( WIDTH - 1 downto 0) := ( others => '0');
     signal sActual_output   :   signed( WIDTH - 1 downto 0) := ( others => '0');
 
+    -- Reporting metrics
+    signal stotalReads  :   integer := 0;
+    signal sErrors      :   integer := 0;    
+
 begin
 
     -- UUT (unit under test) instantiation
@@ -66,7 +70,13 @@ begin
             
             readline(data_file, text_line);
 
+            -- Skip empty lines and single-line comments
+            if text_line.all'length = 0 or text_line.all(1) = '#' then
+                next;
+            end if;
+
             report "Reading line: " & text_line.all;
+            stotalReads <=  stotalReads + 1;
 
             read(text_line, fSign, ok); -- Read sign
             assert ok
@@ -119,7 +129,9 @@ begin
 
             assert (sExpected_output = sActual_output) report "ERROR: expected " & integer'image(to_integer(sExpected_output)) & ", got " & integer'image(to_integer(sActual_output)) severity ERROR;
 
-            read(text_line, c_BUFFER, ok); -- Skip expected newline
+            if (sExpected_output /= sActual_output) then
+                sErrors    <=  sErrors + 1;
+            end if;
 
         end loop;
 
@@ -134,6 +146,9 @@ begin
         write(text_line, string'("#                              #")); writeline(output, text_line);
         write(text_line, string'("################################")); writeline(output, text_line);
         write(text_line, string'("                                ")); writeline(output, text_line);
+
+        report "Total lines processed: " & integer'image(stotalReads);
+        report "Errors: " & integer'image(sErrors);
 
         wait for WAIT_TIME;
 
