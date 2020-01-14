@@ -1,0 +1,3 @@
+#!/bin/bash
+cd stimulus_generation
+for f in *.py; do python "$f"; done

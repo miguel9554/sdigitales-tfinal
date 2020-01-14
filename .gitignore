@@ -1,4 +1,3 @@
-# Ignoramos todo lo de verification salvo los vhdl y los dat
+# Ignoramos todo lo de verification salvo los vhdl
 verification/*/*
 !verification/*/*.vhdl
-!verification/*/*.dat
