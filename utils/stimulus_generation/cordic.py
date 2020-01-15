@@ -1,19 +1,20 @@
 import random
 import math
+import pathlib
 
 
 def round(number):
     return int(math.floor(number))
 
 
-filepath = '../../verification/tb_cordic/stimulus.dat'
+filepath = pathlib.Path(__file__).parent.parent.parent.absolute() / 'verification' / 'tb_cordic' / 'stimulus.dat'
 # Number of test cases to generate
-NUMBER_OF_TESTS = 10
+NUMBER_OF_TESTS = 1000
 # Deterministic seed for reproducibility
 random.seed(54)
 
 # Width, in bits, of coordinates
-COORDINATES_WIDTH = 33
+COORDINATES_WIDTH = 10
 # Width, in bits, of the integer part of angles
 ANGLE_INTEGER_WIDTH = 6
 # Width, in bits, of the fractional part of angles

@@ -1,5 +1,6 @@
 import random
 import math
+import pathlib
 
 
 def round(number):
@@ -13,7 +14,7 @@ def overflow(number, width):
         return True
 
 
-filepath = '../../verification/tb_addsub/stimulus.dat'
+filepath = pathlib.Path(__file__).parent.parent.parent.absolute() / 'verification' / 'tb_addsub' / 'stimulus.dat'
 # Number of test cases to generate
 NUMBER_OF_TESTS = 10000
 # Deterministic seed for reproducibility
