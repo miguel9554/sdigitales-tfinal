@@ -9,12 +9,12 @@ def round(number):
 
 filepath = pathlib.Path(__file__).parent.parent.parent.absolute() / 'verification' / 'tb_cordic' / 'stimulus.dat'
 # Number of test cases to generate
-NUMBER_OF_TESTS = 1000
+NUMBER_OF_TESTS = 100
 # Deterministic seed for reproducibility
 random.seed(54)
 
 # Width, in bits, of coordinates
-COORDINATES_WIDTH = 10
+COORDINATES_WIDTH = 30
 # Width, in bits, of the integer part of angles
 ANGLE_INTEGER_WIDTH = 6
 # Width, in bits, of the fractional part of angles
@@ -69,8 +69,8 @@ with open(filepath, 'w') as fp:
             Z_old = Z
             sigma_old = sigma
 
-        # X = int(X*0.607252935)
-        # Y = int(Y*0.607252935)
+        X = round(X*0.607252935)
+        Y = round(Y*0.607252935)
 
         X_correct = (X0*math.cos(angle*math.pi/180)-Y0*math.sin(angle*math.pi/180))
         Y_correct = (X0*math.sin(angle*math.pi/180)+Y0*math.cos(angle*math.pi/180))

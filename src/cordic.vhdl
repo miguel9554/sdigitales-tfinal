@@ -23,7 +23,7 @@ architecture behavioral of cordic is
     -- Constants
     constant STEP_WIDTH             :   integer := 4;
     constant ANGLES_WIDTH           :   integer := ANGLES_INTEGER_WIDTH+ANGLES_FRACTIONAL_WIDTH+1;
-    constant CORDIC_SCALE_FACTOR    :   integer := integer(0.607252935*real(2**COORDS_WIDTH)); -- Cordic scale factor, ~0.607252935
+    constant CORDIC_SCALE_FACTOR    :   real    := 0.607252935;
 
     -- Types
     type rom_type is array (0 to STAGES-1) of signed(ANGLES_WIDTH-1 downto 0);
@@ -80,6 +80,9 @@ architecture behavioral of cordic is
     signal sX_multiplication_buffer     :   signed(2*COORDS_WIDTH-1 downto 0)   := (others => '0');
     signal sY_multiplication_buffer     :   signed(2*COORDS_WIDTH-1 downto 0)   := (others => '0');
 
+    -- Cordic scale factor
+    signal sCordic_scale_factor :   signed(COORDS_WIDTH-1 downto 0) := to_signed(integer(CORDIC_SCALE_FACTOR*real(2**(COORDS_WIDTH-1))), COORDS_WIDTH);
+
 begin
     
     -- Inputs initialization
@@ -112,13 +115,12 @@ begin
     end generate stages_instantiation;
 
     -- Scaling
-    -- sX_multiplication_buffer <=  sX_array(STAGES)*to_signed(CORDIC_SCALE_FACTOR, COORDS_WIDTH);
-    -- sY_multiplication_buffer <=  sY_array(STAGES)*to_signed(CORDIC_SCALE_FACTOR, COORDS_WIDTH);
+    sX_multiplication_buffer <=  sX_array(STAGES)*sCordic_scale_factor;
+    sY_multiplication_buffer <=  sY_array(STAGES)*sCordic_scale_factor;
 
     -- Outputs assignement
-    -- X    <=  sX_multiplication_buffer(2*COORDS_WIDTH-1 downto COORDS_WIDTH);
-    -- Y    <=  sY_multiplication_buffer(2*COORDS_WIDTH-1 downto COORDS_WIDTH);
-    X   <=  sX_array(STAGES);
-    Y   <=  sY_array(STAGES);
+    -- Buffer has 2 bits for integer part, we only want one and the rest of fractional bits we can fit
+    X    <=  sX_multiplication_buffer(2*COORDS_WIDTH-2 downto COORDS_WIDTH-1);
+    Y    <=  sY_multiplication_buffer(2*COORDS_WIDTH-2 downto COORDS_WIDTH-1);
 
 end architecture behavioral;
