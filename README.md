@@ -15,4 +15,10 @@ Hay que hacer andar el escalado con coords < 31 bits, después ver cómo hacemos
 
 ### Update 15/01:
 
-Ya funciona el escalado, hay discrepancias con lo generado por el script en < 4% de los casos, con una discrepancia unitaria en el último decimal
+~Ya funciona el escalado, hay discrepancias con lo generado por el script en < 4% de los casos, con una discrepancia unitaria en el último decimal.~
+
+Solucionado el problema (al menos pasa 10k de casos con cero error). El problema está en encontrar cual es el valor exacto de factor de escala que usa el algoritmo. Es decir, que valor toma 
+
+`to_signed(integer(CORDIC_SCALE_FACTOR*real(2**(COORDS_WIDTH-1))), COORDS_WIDTH)`
+
+Ahora esta harcodeado para 30 bits, queda encontrar una expresión generica en función de `CORDIC_SCALE_FACTOR` y `COORDS_WIDTH`.
