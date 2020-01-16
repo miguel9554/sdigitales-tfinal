@@ -1,3 +1,4 @@
 # Ignoramos todo lo de verification salvo los vhdl
 verification/*/*
 !verification/*/*.vhdl
+__pycache__/
