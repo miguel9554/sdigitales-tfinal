@@ -46,6 +46,10 @@ el factor de escala para usar en python es
 ROUNDED_CORDIC_SCALE_FACTOR = int(PURE_CORDIC_SCALE_FACTOR*2**(WIDTH+1))*2**-(WIDTH+1)
 ```
 
-## Update 2 15/01
+### Update 2 15/01
 
 Los scripts de python ya generan la misma salida que el módulo cordic, solucionado (aparentemente) el tema de redondeo, como se explica arriba. Se probó con 10k de casos para 10, 20 y 30 bits y cero errores.
+
+### Status actual 16/01 00:32
+
+Lo que tenemos garantizado entonces, es que el script `utils/stimulus_generation/cordic.py` nos da exactamente la misma salida que nos da el módulo VHDL. Es decir, si le damos los mismos tres vectores binarios a ambos, a la salida tenderemos los mismos dos vectores binarios. La interpretación de los valores de estos vectores es otro tema. Eso es lo que tenemos que ver ahora, con el script `utils/cordic_analysis.py`, si interpretamos estos vectores como cordenadas, en que error estamos incurriendo.
