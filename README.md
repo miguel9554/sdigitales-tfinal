@@ -21,4 +21,31 @@ Solucionado el problema (al menos pasa 10k de casos con cero error). El problema
 
 `to_signed(integer(CORDIC_SCALE_FACTOR*real(2**(COORDS_WIDTH-1))), COORDS_WIDTH)`
 
-Ahora esta harcodeado para 30 bits, queda encontrar una expresión generica en función de `CORDIC_SCALE_FACTOR` y `COORDS_WIDTH`.
+Ahora está harcodeado para 30 bits, queda encontrar una expresión generica en función de `CORDIC_SCALE_FACTOR` y `COORDS_WIDTH`.
+
+#### Solución
+
+Aparentemente, hay que imitar esto
+
+- Computar `CORDIC_SCALE_FACTOR*real(2**(COORDS_WIDTH-1))`
+	- En python, lo hacemos como `PURE_CORDIC_SCALE_FACTOR*2**(WIDTH+1)`. Lo más probable es que tengan el mismo valor en ambos lenguajes
+- Pasar a entero, `integer()`
+	- En python, lo hacemos con `int(round())`. Aparentemente, el redondeo de python con `round` es igual al de vhdl. Si en algún momento falla, el problema puede estar en la diferencia de redondeo
+- En vhdl, este valor entero se convierte a un `signed` de `COORDS_WIDTH` bits. Esta conversión no tiene ningún tipo de error. Con suficientes bits, los enteros son 1 a 1
+	- En python, para obtener el factor de escala con el redondeo, multiplicar el entero anterior por `2**-(WIDTH+1)`. Esto debería dar lo mismo que multiplicar el `signed` por `2**-(WIDTH+1)` (shiftear para que quede como un decimal) y convertir el numero binario fraccionario resultante a decimal. Si falla la multiplicación, probar con esto
+
+En resúmen, suponiendo que
+
+- la multiplicación por `2**(COORDS...` da lo mismo en python y vhdl
+- python y vhdl redondean igual
+- `COORDS_WIDTH = WIDTH + 2` (el testbench en vhdl usa coordenadas 2 bits mas anchas que las que genera el script en python)
+
+el factor de escala para usar en python es
+
+```python
+ROUNDED_CORDIC_SCALE_FACTOR = int(PURE_CORDIC_SCALE_FACTOR*2**(WIDTH+1))*2**-(WIDTH+1)
+```
+
+## Update 2 15/01
+
+Los scripts de python ya generan la misma salida que el módulo cordic, solucionado (aparentemente) el tema de redondeo, como se explica arriba. Se probó con 10k de casos para 10, 20 y 30 bits y cero errores.

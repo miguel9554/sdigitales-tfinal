@@ -3,20 +3,19 @@ import math
 import pathlib
 
 
-def round(number):
+def floor_round(number):
     return int(math.floor(number))
 
 
 filepath = pathlib.Path(__file__).parent.parent.parent.absolute() / 'verification' / 'tb_cordic' / 'stimulus.dat'
 # Number of test cases to generate
-NUMBER_OF_TESTS = 10000
+NUMBER_OF_TESTS = 100
 # Deterministic seed for reproducibility
 random.seed(54)
-# CORDIC scale factor
-# CORDIC_SCALE_FACTOR = 0.607252935
-CORDIC_SCALE_FACTOR = 0.6072529349476099
 # Width, in bits, of coordinates
 COORDINATES_WIDTH = 30
+# VHDL_COORDINATES_WIDTH - PYTHON_COORDINATES_WIDTH (how many more bits are used in the vhdl testbench)
+OFFSET_VHDL_COORDS_WIDTH = 2
 # Width, in bits, of the integer part of angles
 ANGLE_INTEGER_WIDTH = 6
 # Width, in bits, of the fractional part of angles
@@ -25,6 +24,9 @@ ANGLE_FRACTIONAL_WIDTH = 16
 SHIFT_WIDTH = 4
 # Number of stages of the architecture
 NUMBER_OF_STAGES = 16
+# CORDIC scale factor
+PURE_CORDIC_SCALE_FACTOR = 0.607252935
+ROUNDED_CORDIC_SCALE_FACTOR = int(round(PURE_CORDIC_SCALE_FACTOR*2**(COORDINATES_WIDTH+OFFSET_VHDL_COORDS_WIDTH-1)))*2**-(COORDINATES_WIDTH+OFFSET_VHDL_COORDS_WIDTH-1)
 
 atan = [45,
 26.565051177078,
@@ -61,8 +63,8 @@ with open(filepath, 'w') as fp:
 
         for step in range(NUMBER_OF_STAGES):
 
-            X = X_old - round(Y_old/(2**step)) if not sigma_old else X_old + round(Y_old/(2**step))
-            Y = Y_old + round(X_old/(2**step)) if not sigma_old else Y_old - round(X_old/(2**step))
+            X = X_old - floor_round(Y_old/(2**step)) if not sigma_old else X_old + floor_round(Y_old/(2**step))
+            Y = Y_old + floor_round(X_old/(2**step)) if not sigma_old else Y_old - floor_round(X_old/(2**step))
             Z = Z_old - atan[step] if not sigma_old else Z_old + atan[step]
             sigma = 0 if Z >= 0 else 1
 
@@ -71,8 +73,8 @@ with open(filepath, 'w') as fp:
             Z_old = Z
             sigma_old = sigma
 
-        X = round(X*CORDIC_SCALE_FACTOR)
-        Y = round(Y*CORDIC_SCALE_FACTOR)
+        X = floor_round(X*ROUNDED_CORDIC_SCALE_FACTOR)
+        Y = floor_round(Y*ROUNDED_CORDIC_SCALE_FACTOR)
 
         X_correct = (X0*math.cos(angle*math.pi/180)-Y0*math.sin(angle*math.pi/180))
         Y_correct = (X0*math.sin(angle*math.pi/180)+Y0*math.cos(angle*math.pi/180))
