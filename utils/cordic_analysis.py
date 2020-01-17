@@ -1,5 +1,6 @@
 import random
 import math
+import statistics
 from stimulus_generation.cordic import cordic
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,7 +11,7 @@ def histogram(d):
     n, bins, patches = plt.hist(x=d, bins='auto', color='#0504aa',
                                 alpha=0.7, rwidth=0.85)
     plt.grid(axis='y', alpha=0.75)
-    plt.xlabel('Value')
+    plt.xlabel('Value') 
     plt.ylabel('Frequency')
     plt.title('My Very Own Histogram')
     maxfreq = n.max()
@@ -52,8 +53,8 @@ for _ in range(NUMBER_OF_TESTS):
     x_errors.append(abs(X_correct - X_CORDIC)/abs(X_correct)*100)
     y_errors.append(abs(Y_correct - Y_CORDIC)/abs(Y_correct)*100)
 
-hist_plot = histogram(x_errors)
-hist_plot.show()
+x_errors_mean = statistics.mean(x_errors)
+x_errors_filtered = [x for x in x_errors if x < 2*x_errors_mean]
 
-hist_plot = histogram(y_errors)
-hist_plot.show()
+plt.hist(x_errors_filtered)
+plt.show()
