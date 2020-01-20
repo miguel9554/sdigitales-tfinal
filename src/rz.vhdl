@@ -35,9 +35,6 @@ architecture behavioral of Rz is
         );
     end component cordic;
 
-    -- Buffer signals
-    signal sZ_buffer        :   signed(COORDS_WIDTH-1 downto 0)   := (others => '0');
-
 begin
     
     -- Cordic rotation
