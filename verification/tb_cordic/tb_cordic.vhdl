@@ -123,9 +123,9 @@ begin
                 report "Read space separator failed for line: " & text_line.all
                 severity failure;
 
-            read(text_line, fAngle, ok); -- Read Z0
+            read(text_line, fAngle, ok); -- Read angle
             assert ok
-                report "Read 'Z0' failed for line: " & text_line.all
+                report "Read 'angle' failed for line: " & text_line.all
                 severity failure;
             sAngle      <=  to_signed(fAngle, sAngle'length);
 
