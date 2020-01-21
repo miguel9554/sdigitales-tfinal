@@ -40,7 +40,7 @@ $(TBS_WLIBS):
 
 $(DATA_FILES): $(VER_DIR)tb_%/stimulus.dat : utils/stimulus_generation/%.py
 	@echo "Generating data file for $@"
-	@python $<
+	python $<
 
 # Esta regla nos dice que los ejecutables dependen del vhdl que está en la carpeta del TB (verification/TB),
 # de WLIB (la librería work, está en la carpeta del testbench) y de todos los archivos fuente
@@ -69,11 +69,12 @@ $(TBS:%=gtkwave_%): gtkwave_% : $(VER_DIR)%/waves.$(WOF)
 
 .PHONY: clean
 clean:
+	$(foreach tb,$(VER)$(TBS),rm -f $(VER_DIR)$(tb)/*.o;)
+	rm -f $(TBS_EXE)
+	rm -f $(TBS_WAVES)
+	rm -f $(TBS_WLIBS)
 	@clear
-	-$(foreach tb,$(VER)$(TBS),rm $(VER_DIR)$(tb)/*.o;)
-	-rm $(TBS_EXE)
-	-rm $(TBS_WAVES)
-	-rm $(TBS_WLIBS)
+	@echo "Clean!"
 
 
 
