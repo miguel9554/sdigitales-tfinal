@@ -38,6 +38,10 @@ $(TBS_WLIBS):
 	 	ghdl -i $(GHDL_OPTIONS) *.vhdl $(SRC_REL_FILES)
 
 
+$(DATA_FILES): $(VER_DIR)tb_%/stimulus.dat : utils/stimulus_generation/%.py
+	@echo "Generating data file for $@"
+	@python $<
+
 # Esta regla nos dice que los ejecutables dependen del vhdl que está en la carpeta del TB (verification/TB),
 # de WLIB (la librería work, está en la carpeta del testbench) y de todos los archivos fuente
 .SECONDEXPANSION:
