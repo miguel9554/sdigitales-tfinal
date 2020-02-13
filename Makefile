@@ -11,7 +11,7 @@ RUN_FLAGS =
 
 DATA_FILES = $(wildcard $(VER_DIR)*/*.dat)
 
-SRC_DIRS  = ./src
+SRC_DIRS  = $(wildcard ./src/*)
 SRC_FILES = $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.vhdl))
 
 GHDL_OPTIONS = --std=02 --ieee=synopsys
