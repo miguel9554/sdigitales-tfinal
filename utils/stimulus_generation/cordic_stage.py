@@ -14,7 +14,7 @@ def overflow(number, width):
         return True
 
 
-filepath = pathlib.Path(__file__).parent.parent.parent.absolute() / 'verification' / 'tb_cordic_stage' / 'stimulus.dat'
+filepath = pathlib.Path(__file__).absolute().parent.parent.parent / 'verification' / 'tb_cordic_stage' / 'stimulus.dat'
 # Number of test cases to generate
 NUMBER_OF_TESTS = 100000
 # Deterministic seed for reproducibility

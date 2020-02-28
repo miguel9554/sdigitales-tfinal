@@ -6,7 +6,7 @@ import cordic
 
 def main():
 
-    filepath = pathlib.Path(__file__).parent.parent.parent.absolute() / 'verification' / 'tb_ry' / 'stimulus.dat'
+    filepath = pathlib.Path(__file__).absolute().parent.parent.parent / 'verification' / 'tb_ry' / 'stimulus.dat'
 
     # Deterministic seed for reproducibility
     random.seed(54)
