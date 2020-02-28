@@ -40,7 +40,7 @@ $(TBS_WLIBS):
 
 $(DATA_FILES): $(VER_DIR)tb_%/stimulus.dat : utils/stimulus_generation/%.py
 	@echo "Generating data file for $@"
-	python $<
+	python3 $<
 
 # Esta regla nos dice que los ejecutables dependen del vhdl que está en la carpeta del TB (verification/TB),
 # de WLIB (la librería work, está en la carpeta del testbench) y de todos los archivos fuente
