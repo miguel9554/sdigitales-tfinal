@@ -9,7 +9,7 @@ WLIB_NAME  = work-obj93.cf
 RUN_FLAGS = --disp-time
 RUN_FLAGS =
 
-DATA_FILES = $(wildcard $(VER_DIR)*/*.dat)
+DATA_FILES = $(wildcard $(VER_DIR)*/stimulus.dat)
 
 SRC_DIRS  = $(wildcard ./src/*)
 SRC_FILES = $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.vhdl))
@@ -71,6 +71,7 @@ $(TBS:%=gtkwave_%): gtkwave_% : $(VER_DIR)%/waves.$(WOF)
 clean:
 	$(foreach tb,$(VER)$(TBS),rm -f $(VER_DIR)$(tb)/*.o;)
 	rm -f $(TBS_EXE)
+	rm -f $(DATA_FILES)
 	rm -f $(TBS_WAVES)
 	rm -f $(TBS_WLIBS)
 	@clear
