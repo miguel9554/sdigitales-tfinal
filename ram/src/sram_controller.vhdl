@@ -2,6 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library vunit_lib;
+context vunit_lib.vunit_context;
+
 entity sram_controller is
     generic(
         DATA_WIDTH      : natural := 16;
@@ -27,28 +30,30 @@ end sram_controller;
 
 architecture arch of sram_controller is
     type state_type is (idle, read, write);
-    signal state_current, state_next: state_type;
+    signal state_current, state_next: state_type := idle;
     signal data_f2s_current, data_f2s_next: std_logic_vector(DATA_WIDTH-1 downto 0);
     signal data_s2f_current, data_s2f_next: std_logic_vector(DATA_WIDTH-1 downto 0);
     signal address_current, address_next: std_logic_vector(ADDRESS_WIDTH-1 downto 0);
-    signal we_current, we_next: std_logic;
-    signal ce_current, ce_next: std_logic;
-    signal tri_current, tri_next: std_logic;
+    signal ready_current, ready_next: std_logic := '1';
+    signal we_current, we_next: std_logic := '1';
+    signal ce_current, ce_next: std_logic := '1';
+    signal tri_current, tri_next: std_logic := '0';
     signal cycles_to_wait_current, cycles_to_wait_next  : unsigned(2 downto 0)  := to_unsigned(CYCLES_TO_WAIT, CYCLES_TO_WAIT_WIDTH);
 begin
 
     -- state & data registers
-    process(clk,reset)
+    process(all)
     begin
         if (reset='1') then
             state_current <= idle;
             address_current <= (others=>'0');
             data_f2s_current <= (others=>'0');
             data_s2f_current <= (others=>'0');
+            cycles_to_wait_current <= (others=>'0');
             tri_current <= '0';
             we_current <= '1';
             ce_current <= '1';
-            ready <= '1';
+            ready_current <= '1';
         elsif rising_edge(clk) then
             state_current <= state_next;
             address_current <= address_next;
@@ -57,6 +62,8 @@ begin
             tri_current <= tri_next;
             we_current <= we_next;
             ce_current <= ce_next;
+            ready_current <= ready_next;
+            cycles_to_wait_current <= cycles_to_wait_next;
         end if;
     end process;
 
@@ -66,18 +73,18 @@ begin
         address_next <= address_current;
         data_f2s_next <= data_f2s_current;
         data_s2f_next <= data_s2f_current;
-        ready <= '0';
+        ready_next <= '0';
         tri_next <= tri_current;
         we_next <= we_current;
         ce_next <= ce_current;
         case state_current is
             when idle =>
-                ready <= '1';
                 if mem = '0' then
                     state_next <= idle;
                     we_next <= '1';
                     ce_next <= '1';
                     tri_next <= '0';
+                    ready_next <= '1';
                 else
                     address_next <= address_in;
                     cycles_to_wait_next <= to_unsigned(CYCLES_TO_WAIT, CYCLES_TO_WAIT_WIDTH);
@@ -102,6 +109,7 @@ begin
                     we_next <= '1';
                     ce_next <= '1';
                     tri_next <= '0';
+                    ready_next <= '1';
                 else
                     state_next  <=  read;
                 end if;
@@ -112,6 +120,7 @@ begin
                     we_next <= '1';
                     ce_next <= '1';
                     tri_next <= '0';
+                    ready_next <= '1';
                 else
                     state_next  <=  write;
                 end if;
@@ -131,5 +140,6 @@ begin
     ub      <= '0';
     data_to_sram    <= data_f2s_current when tri_current = '1' else (others => 'Z');
     address_to_sram <= address_current;
+    ready <= ready_current;
 
 end arch;
