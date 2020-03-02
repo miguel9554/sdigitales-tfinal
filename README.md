@@ -53,3 +53,7 @@ Los scripts de python ya generan la misma salida que el módulo cordic, solucion
 ### Status actual 16/01 00:32
 
 Lo que tenemos garantizado entonces, es que el script `utils/stimulus_generation/cordic.py` nos da exactamente la misma salida que nos da el módulo VHDL. Es decir, si le damos los mismos tres vectores binarios a ambos, a la salida tenderemos los mismos dos vectores binarios. La interpretación de los valores de estos vectores es otro tema. Eso es lo que tenemos que ver ahora, con el script `utils/cordic_analysis.py`, si interpretamos estos vectores como cordenadas, en que error estamos incurriendo.
+
+## Estructura actual
+
+Con el esquema de un makefile y ghdl crudo, se implementó el rotador. Con VUnit, se implementó la RAM, y la UART a pedal. Con el esquema del makefile quedaron los archivos del rotador. Los nuevos módulos tienen su propia carpeta, con directorios src con los fuentes, test con los tests, y implementation con los archivos especificos de la implementación.
