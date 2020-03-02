@@ -2,9 +2,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library vunit_lib;
-context vunit_lib.vunit_context;
-
 entity sram_controller is
     generic(
         DATA_WIDTH      : natural := 16;
@@ -42,7 +39,7 @@ architecture arch of sram_controller is
 begin
 
     -- state & data registers
-    process(all)
+    process(reset, clk)
     begin
         if (reset='1') then
             state_current <= idle;
@@ -54,7 +51,7 @@ begin
             we_current <= '1';
             ce_current <= '1';
             ready_current <= '1';
-        elsif rising_edge(clk) then
+        elsif (clk'event and clk='1') then
             state_current <= state_next;
             address_current <= address_next;
             data_f2s_current <= data_f2s_next;
@@ -68,7 +65,9 @@ begin
     end process;
 
    -- next-state logic
-    process(all)
+    process(state_current, data_f2s_current, data_s2f_current,
+    address_current, ready_current, we_current, ce_current, tri_current, cycles_to_wait_current,
+    mem, rw, address_in, data_in)
     begin
         address_next <= address_current;
         data_f2s_next <= data_f2s_current;
