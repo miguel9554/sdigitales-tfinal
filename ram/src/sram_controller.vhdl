@@ -35,7 +35,7 @@ architecture arch of sram_controller is
     signal we_current, we_next: std_logic := '1';
     signal ce_current, ce_next: std_logic := '1';
     signal tri_current, tri_next: std_logic := '0';
-    signal cycles_to_wait_current, cycles_to_wait_next  : unsigned(2 downto 0)  := to_unsigned(CYCLES_TO_WAIT, CYCLES_TO_WAIT_WIDTH);
+    signal cycles_to_wait_current, cycles_to_wait_next  : unsigned(CYCLES_TO_WAIT_WIDTH-1 downto 0)  := to_unsigned(CYCLES_TO_WAIT, CYCLES_TO_WAIT_WIDTH);
 begin
 
     -- state & data registers
@@ -73,6 +73,7 @@ begin
         data_f2s_next <= data_f2s_current;
         data_s2f_next <= data_s2f_current;
         ready_next <= '0';
+        cycles_to_wait_next <= cycles_to_wait_current;
         tri_next <= tri_current;
         we_next <= we_current;
         ce_next <= ce_current;
