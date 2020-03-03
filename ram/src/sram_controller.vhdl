@@ -26,8 +26,12 @@ entity sram_controller is
 end sram_controller;
 
 architecture arch of sram_controller is
-    type state_type is (idle, read, write);
-    signal state_current, state_next: state_type := idle;
+    
+    constant init_time_const : integer := (15100);
+
+    type state_type is (init, idle, read, write);
+
+    signal state_current, state_next: state_type := init;
     signal data_f2s_current, data_f2s_next: std_logic_vector(DATA_WIDTH-1 downto 0);
     signal data_s2f_current, data_s2f_next: std_logic_vector(DATA_WIDTH-1 downto 0);
     signal address_current, address_next: std_logic_vector(ADDRESS_WIDTH-1 downto 0);
@@ -36,6 +40,7 @@ architecture arch of sram_controller is
     signal ce_current, ce_next: std_logic := '1';
     signal tri_current, tri_next: std_logic := '0';
     signal cycles_to_wait_current, cycles_to_wait_next  : unsigned(CYCLES_TO_WAIT_WIDTH-1 downto 0)  := to_unsigned(CYCLES_TO_WAIT, CYCLES_TO_WAIT_WIDTH);
+    signal count_current, count_next : integer range 0 to init_time_const := 0;
 begin
 
     -- state & data registers
@@ -51,6 +56,7 @@ begin
             we_current <= '1';
             ce_current <= '1';
             ready_current <= '1';
+            count_current <= 0;
         elsif (clk'event and clk='1') then
             state_current <= state_next;
             address_current <= address_next;
@@ -61,13 +67,14 @@ begin
             ce_current <= ce_next;
             ready_current <= ready_next;
             cycles_to_wait_current <= cycles_to_wait_next;
+            count_current <= count_next;
         end if;
     end process;
 
    -- next-state logic
     process(state_current, data_f2s_current, data_s2f_current,
     address_current, ready_current, we_current, ce_current, tri_current, cycles_to_wait_current,
-    mem, rw, address_in, data_in)
+    mem, rw, address_in, data_in, count_current)
     begin
         address_next <= address_current;
         data_f2s_next <= data_f2s_current;
@@ -77,7 +84,15 @@ begin
         tri_next <= tri_current;
         we_next <= we_current;
         ce_next <= ce_current;
+        count_next <= count_current;
         case state_current is
+            when init =>
+                if count_current >= init_time_const then
+                    state_next <= idle;
+                else
+                    count_next <= count_current - 1;
+                    state_next <= init;
+                end if;
             when idle =>
                 if mem = '0' then
                     state_next <= idle;
