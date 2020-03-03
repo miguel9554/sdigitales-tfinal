@@ -90,7 +90,7 @@ begin
                 if count_current >= init_time_const then
                     state_next <= idle;
                 else
-                    count_next <= count_current - 1;
+                    count_next <= count_current + 1;
                     state_next <= init;
                 end if;
             when idle =>

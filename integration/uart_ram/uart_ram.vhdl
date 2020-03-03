@@ -40,6 +40,7 @@ architecture arch of uart_ram is
     signal db_btn: std_logic_vector(3 downto 0);
 
     signal reset: std_logic := '1';
+    signal data_from_switch: std_logic_vector(7 downto 0) := (others => '0');
 
     -- seven segment
     signal led3, led2, led1, led0: std_logic_vector(7 downto 0);
@@ -54,7 +55,7 @@ architecture arch of uart_ram is
     signal r_data: std_logic_vector(7 downto 0);
 
     -- state machine
-    type state_t is (initial_state, waiting_for_uart, write_sram, waiting_for_sram);
+    type state_t is (initial_state, read_with_switch, waiting_for_uart, write_sram, waiting_for_sram);
     signal state_current, state_next : state_t := initial_state;
     signal address_current, address_next: unsigned(ADDRESS_WIDTH-1 downto 0) := (others => '0');
     signal mem_current, mem_next: std_logic := '0';
@@ -134,17 +135,22 @@ begin
         data_in_current <= data_in_next;
         rd_uart_current <= rd_uart_next;
         cycles_current <= cycles_next;
+        if (db_btn(0)='1') then
+            data_from_switch <= sw;
+        end if;
     end if;
     end process;
 
     -- next state logic
     process(state_current, rx_empty, r_data, address_current, state_current, rw_current,
-    data_in_current, address_current, db_btn, cycles_current, reset)
+    data_in_current, address_current, db_btn, cycles_current, reset, data_from_switch)
     begin
         mem_next <= '0';
         rd_uart_next <= '0';
         rw_next <= rw_current;
         data_in_next <= data_in_current;
+        address_next <= address_current;
+        cycles_next <= cycles_current;
         case state_current is
             when initial_state =>
                 if cycles_current = to_unsigned(0, CYCLES_TO_WAIT_WIDTH) then
@@ -157,20 +163,35 @@ begin
             when waiting_for_uart =>
                 if rx_empty = '0' then
                     state_next <= write_sram;
+                elsif db_btn(3) = '1' then
+                    state_next <= read_with_switch;
                 else
-                    if db_btn(2) = '1' then
-                        mem_next <= '1';
-                        rw_next <= '0';
-                        address_next <= unsigned("0000000000" & sw);
-                        state_next <= waiting_for_sram;
-                    else
                     state_next <= waiting_for_uart;
-                    end if;
+                end if;
+            when read_with_switch =>
+                address_next <= unsigned("0000000000000000" & sw);
+                if db_btn(1)='1' then -- write
+                    mem_next <= '1';
+                    rw_next <= '0';
+                    data_in_next <= "00000000" & data_from_switch;
+                    state_next <= read_with_switch;
+                elsif db_btn(2)='1' then -- read
+                    mem_next <= '1';
+                    rw_next <= '1';
+                    state_next <= read_with_switch;
+                elsif db_btn(3)='1' then
+                    mem_next <= '0';
+                    rw_next <= '1';
+                    state_next <= waiting_for_uart;
+                else
+                    mem_next <= '0';
+                    rw_next <= '1';
+                    state_next <= read_with_switch;
                 end if;
             when write_sram =>
                 mem_next <= '1';
                 rd_uart_next <= '1';
-                rw_next <= '1';
+                rw_next <= '0';
                 data_in_next <= "00000000" & r_data;
                 state_next <= waiting_for_sram;
             when waiting_for_sram =>
