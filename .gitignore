@@ -3,3 +3,5 @@ verification/*/*
 !verification/*/*.vhdl
 __pycache__/
 */vunit_out/
+*/*/vunit_out/
+*/*/*/vunit_out/
