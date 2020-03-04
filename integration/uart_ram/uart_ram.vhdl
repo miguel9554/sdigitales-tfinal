@@ -19,6 +19,7 @@ entity uart_ram is
         -- outputs
         an: out std_logic_vector(3 downto 0);
         sseg: out std_logic_vector(7 downto 0);
+        Led: out std_logic_vector(7 downto 0);
         -- to SRAM
         MemOE: out std_logic;
         MemWR: out std_logic;
@@ -35,6 +36,9 @@ end uart_ram;
 
 architecture arch of uart_ram is
 
+    constant LINES_TO_RECEIVE: natural := 3;
+    constant BYTES_TO_RECEIVE: natural := 12*LINES_TO_RECEIVE;
+    
     signal data_reg: std_logic_vector(7 downto 0);
     signal db_btn: std_logic_vector(3 downto 0);
 
@@ -54,17 +58,117 @@ architecture arch of uart_ram is
     signal r_data: std_logic_vector(7 downto 0);
 
     -- state machine
-    type state_t is (initial_state, read_with_switch, waiting_for_uart, reading_from_uart, write_sram, waiting_for_sram);
+    type state_t is (initial_state, read_with_switch, waiting_for_uart, reading_from_uart, write_sram, waiting_for_sram, data_received);
     signal state_current, state_next : state_t := initial_state;
     signal address_current, address_next: unsigned(ADDRESS_WIDTH-1 downto 0) := (others => '0');
     signal mem_current, mem_next: std_logic := '0';
     signal rw_current, rw_next: std_logic := '0';
     signal data_in_current, data_in_next: std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
     signal rd_uart_current, rd_uart_next: std_logic := '0';
-    signal cycles_current, cycles_next: unsigned(CYCLES_TO_WAIT_WIDTH-1 downto 0) := to_unsigned(CYCLES_TO_WAIT, CYCLES_TO_WAIT_WIDTH);
-    signal bytes_received_current, bytes_received_next: integer := 0;
+    signal cycles_current, cycles_next: natural := CYCLES_TO_WAIT;
+    signal bytes_received_current, bytes_received_next: natural := 0;
+    signal leds_current, leds_next: std_logic_vector(7 downto 0) := (others => '0');
 
 begin
+         
+    -- state & data registers
+    process(clk)
+    begin
+    if (clk'event and clk='1') then
+        state_current <= state_next;
+        address_current <= address_next;
+        mem_current <= mem_next;
+        rw_current <= rw_next;
+        data_in_current <= data_in_next;
+        rd_uart_current <= rd_uart_next;
+        cycles_current <= cycles_next;
+        bytes_received_current <= bytes_received_next;
+        leds_current <= leds_next;
+        if (db_btn(0)='1') then
+            data_from_switch <= sw;
+        end if;
+    end if;
+    end process;
+
+    -- next state logic
+    process(state_current, rx_empty, r_data, address_current, state_current, rw_current,
+    data_in_current, address_current, db_btn, cycles_current, reset, data_from_switch,
+    bytes_received_current, leds_current)
+    begin
+        mem_next <= '0';
+        rd_uart_next <= '0';
+        rw_next <= rw_current;
+        data_in_next <= data_in_current;
+        address_next <= address_current;
+        cycles_next <= cycles_current;
+        bytes_received_next <= bytes_received_current;
+        leds_next <= leds_current;
+        case state_current is
+            when initial_state =>
+                if cycles_current = 0 then
+                    reset <= '0';
+                    state_next <= waiting_for_uart;
+                else
+                    cycles_next <= cycles_current - 1;
+                    state_next <= initial_state;
+                end if;
+            when waiting_for_uart =>
+                if rx_empty = '0' then
+                    rd_uart_next <= '1';
+                    state_next <= reading_from_uart;
+                elsif db_btn(3) = '1' then
+                    state_next <= read_with_switch;
+                elsif bytes_received_current = BYTES_TO_RECEIVE then
+                    state_next <= data_received;
+                else
+                    state_next <= waiting_for_uart;
+                end if;
+            when reading_from_uart =>
+                if (bytes_received_next mod 2) /= 0 then
+                    data_in_next <= r_data & "00000000";
+                    state_next <= waiting_for_uart;
+                else
+                    data_in_next <= data_in_current(DATA_WIDTH-1 downto DATA_WIDTH/2) & r_data;
+                    state_next <= write_sram;
+                end if;
+                bytes_received_next <= bytes_received_current + 1;
+            when data_received =>
+                state_next <= read_with_switch;
+                leds_next <= (others => '1');
+            when read_with_switch =>
+                address_next <= unsigned("0000000000000000" & sw);
+                if db_btn(1)='1' then -- write
+                    mem_next <= '1';
+                    rw_next <= '0';
+                    data_in_next <= "00000000" & data_from_switch;
+                    state_next <= read_with_switch;
+                elsif db_btn(2)='1' then -- read
+                    mem_next <= '1';
+                    rw_next <= '1';
+                    state_next <= read_with_switch;
+                elsif db_btn(3)='1' then
+                    mem_next <= '0';
+                    rw_next <= '1';
+                    state_next <= waiting_for_uart;
+                else
+                    mem_next <= '0';
+                    rw_next <= '1';
+                    state_next <= read_with_switch;
+                end if;
+            when write_sram =>
+                mem_next <= '1';
+                rw_next <= '0';
+                state_next <= waiting_for_sram;
+            when waiting_for_sram =>
+                if ready = '1' then
+                    address_next <= address_current + 1;
+                    rw_next <= '0';
+                    state_next <= waiting_for_uart;
+                else
+                    state_next <= waiting_for_sram;
+                end if;
+        end case;
+    end process;
 
     -- instantiate uart
     uart_unit: entity work.uart(str_arch)
@@ -123,97 +227,8 @@ begin
         port map(
             clk=>clk, reset=>reset, sw=>btn(3),
             db_level=>open, db_tick=>db_btn(3));
-         
-    -- state & data registers
-    process(clk)
-    begin
-    if (clk'event and clk='1') then
-        state_current <= state_next;
-        address_current <= address_next;
-        mem_current <= mem_next;
-        rw_current <= rw_next;
-        data_in_current <= data_in_next;
-        rd_uart_current <= rd_uart_next;
-        cycles_current <= cycles_next;
-        bytes_received_current <= bytes_received_next;
-        if (db_btn(0)='1') then
-            data_from_switch <= sw;
-        end if;
-    end if;
-    end process;
-
-    -- next state logic
-    process(state_current, rx_empty, r_data, address_current, state_current, rw_current,
-    data_in_current, address_current, db_btn, cycles_current, reset, data_from_switch, bytes_received_current)
-    begin
-        mem_next <= '0';
-        rd_uart_next <= '0';
-        rw_next <= rw_current;
-        data_in_next <= data_in_current;
-        address_next <= address_current;
-        cycles_next <= cycles_current;
-        bytes_received_next <= bytes_received_current;
-        case state_current is
-            when initial_state =>
-                if cycles_current = to_unsigned(0, CYCLES_TO_WAIT_WIDTH) then
-                    reset <= '0';
-                    state_next <= waiting_for_uart;
-                else
-                    cycles_next <= cycles_current - 1;
-                    state_next <= initial_state;
-                end if;
-            when waiting_for_uart =>
-                if rx_empty = '0' then
-                    rd_uart_next <= '1';
-                    state_next <= reading_from_uart;
-                elsif db_btn(3) = '1' then
-                    state_next <= read_with_switch;
-                else
-                    state_next <= waiting_for_uart;
-                end if;
-            when reading_from_uart =>
-                if bytes_received_current = 0 then
-                    data_in_next <= r_data & "00000000";
-                    bytes_received_next <= 1;
-                    state_next <= waiting_for_uart;
-                else
-                    data_in_next <= data_in_current(DATA_WIDTH-1 downto DATA_WIDTH/2) & r_data;
-                    bytes_received_next <= 0;
-                    state_next <= write_sram;
-                end if;
-            when read_with_switch =>
-                address_next <= unsigned("0000000000000000" & sw);
-                if db_btn(1)='1' then -- write
-                    mem_next <= '1';
-                    rw_next <= '0';
-                    data_in_next <= "00000000" & data_from_switch;
-                    state_next <= read_with_switch;
-                elsif db_btn(2)='1' then -- read
-                    mem_next <= '1';
-                    rw_next <= '1';
-                    state_next <= read_with_switch;
-                elsif db_btn(3)='1' then
-                    mem_next <= '0';
-                    rw_next <= '1';
-                    state_next <= waiting_for_uart;
-                else
-                    mem_next <= '0';
-                    rw_next <= '1';
-                    state_next <= read_with_switch;
-                end if;
-            when write_sram =>
-                mem_next <= '1';
-                rw_next <= '0';
-                state_next <= waiting_for_sram;
-            when waiting_for_sram =>
-                if ready = '1' then
-                    address_next <= address_current + 1;
-                    rw_next <= '0';
-                    state_next <= waiting_for_uart;
-                else
-                    state_next <= waiting_for_sram;
-                end if;
-        end case;
-    end process;
+    
+    -- leds
+    Led <= leds_current;
 
 end arch;

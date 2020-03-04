@@ -1,0 +1,23 @@
+import serial
+
+COORDS_WIDTH = 31
+LINES_TO_SEND = 6
+
+with open('coordenadas.txt') as fp, serial.Serial('/dev/ttyUSB0', 19200, timeout=1) as ser:
+    
+    for line_number, line in enumerate(fp):
+        
+        if line_number < LINES_TO_SEND:
+
+            x = int(float(line.split('\t')[0])*2**COORDS_WIDTH)
+            x_signed = True if x < 0 else False
+            y = int(float(line.split('\t')[1])*2**COORDS_WIDTH)
+            y_signed = True if y < 0 else False
+            z = int(float(line.split('\t')[2])*2**COORDS_WIDTH)
+            z_signed = True if z < 0 else False
+
+            ser.write((x).to_bytes(4, 'big', signed=x_signed))
+            ser.write((y).to_bytes(4, 'big', signed=y_signed))
+            ser.write((z).to_bytes(4, 'big', signed=z_signed))
+
+            print(f"{hex(x)} {hex(y)} {hex(z)}")
