@@ -358,8 +358,7 @@ begin
     pix_y <= unsigned(pixel_y);            
 
     -- defino donde es mi bitmap, donde voy a dibujar el mundo
-    -- bitmap_on <= '1' when (pix_x <= 2**SQUARE_WIDTH_IN_BITS) and (pix_y <= 2**SQUARE_WIDTH_IN_BITS) else '0';
-    bitmap_on <= '1';
+    bitmap_on <= '1' when (pix_x <= 2**SQUARE_WIDTH_IN_BITS) and (pix_y <= 2**SQUARE_WIDTH_IN_BITS) else '0';
     -- dirección de lectura de la ram de video
     video_ram_read_address <= std_logic_vector(pix_y(SQUARE_WIDTH_IN_BITS-1 downto 0) & pix_x(SQUARE_WIDTH_IN_BITS-1 downto 0));
 
