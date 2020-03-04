@@ -6,7 +6,10 @@ entity uart_ram is
         constant DATA_WIDTH      : natural := 16;
         constant ADDRESS_WIDTH   : natural := 23;
         constant CYCLES_TO_WAIT  : natural := 4000;
-        constant CYCLES_TO_WAIT_WIDTH : natural := 12
+        constant CYCLES_TO_WAIT_WIDTH : natural := 12;
+        constant DVSR: integer:= 27;  -- baud rate divisor
+                            -- DVSR = 50M/(16*baud rate)
+        constant DVSR_BIT: integer:=5 -- # bits of DVSR
     );
     port(
         clk: in std_logic;
@@ -36,7 +39,7 @@ end uart_ram;
 
 architecture arch of uart_ram is
 
-    constant LINES_TO_RECEIVE: natural := 3;
+    constant LINES_TO_RECEIVE: natural := 11946;
     constant BYTES_TO_RECEIVE: natural := 12*LINES_TO_RECEIVE;
     
     signal data_reg: std_logic_vector(7 downto 0);
@@ -172,6 +175,7 @@ begin
 
     -- instantiate uart
     uart_unit: entity work.uart(str_arch)
+    generic map(DVSR=>DVSR, DVSR_BIT=>DVSR_BIT)
     port map(
         clk =>  clk, reset =>  reset, rd_uart =>  rd_uart_current,
         wr_uart =>  rd_uart_current, rx =>  RsRx, w_data =>  r_data,

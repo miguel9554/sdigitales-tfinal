@@ -1,9 +1,9 @@
 import serial
 
 COORDS_WIDTH = 31
-LINES_TO_SEND = 6
+LINES_TO_SEND = 11946
 
-with open('coordenadas.txt') as fp, serial.Serial('/dev/ttyUSB0', 19200, timeout=1) as ser:
+with open('coordenadas.txt') as fp, serial.Serial('/dev/ttyUSB0', 115200, timeout=1) as ser:
     
     for line_number, line in enumerate(fp):
         
@@ -20,4 +20,4 @@ with open('coordenadas.txt') as fp, serial.Serial('/dev/ttyUSB0', 19200, timeout
             ser.write((y).to_bytes(4, 'big', signed=y_signed))
             ser.write((z).to_bytes(4, 'big', signed=z_signed))
 
-            print(f"{hex(x)} {hex(y)} {hex(z)}")
+            print(f"line {line_number} (mem_address: {line_number*6}): {hex(x)} {hex(y)} {hex(z)}")
