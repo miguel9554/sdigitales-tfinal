@@ -222,7 +222,10 @@ begin
                     state_next <= waiting_for_sram_data;
                 end if;
             when waiting_for_sram_data =>
-                if ready = '1' then
+                if mem_current = '1' then
+                    -- así evitamos el glitch de ready en el primer ciclo de lectura
+                    state_next <= waiting_for_sram_data;
+                elsif ready = '1' then
                     -- asignamos el valor a la coordenada correspondiente
                     case byte_position_current is
                         when 0 =>
@@ -388,8 +391,8 @@ begin
             addr_a=>video_ram_write_address, addr_b=>video_ram_read_address,
             din_a=>video_ram_data_in, dout_a=>open, dout_b=>video_ram_data_out);
 
-    video_ram_write_address <= std_logic_vector(Y_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) &
-        std_logic_vector(Z_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS));
+    video_ram_write_address <= std_logic_vector(Z_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) &
+        std_logic_vector(Y_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS));
 
     -- leds
     Led <= leds_current;

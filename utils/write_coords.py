@@ -13,7 +13,7 @@ with open('coordenadas.txt') as fp, serial.Serial('/dev/ttyUSB0', 115200, timeou
             x_signed = True if x < 0 else False
             y = int(float(line.split('\t')[1])*2**COORDS_WIDTH)
             y_signed = True if y < 0 else False
-            z = int(float(line.split('\t')[2])*2**COORDS_WIDTH)
+            z = -1*int(float(line.split('\t')[2])*2**COORDS_WIDTH)
             z_signed = True if z < 0 else False
 
             ser.write((x).to_bytes(4, 'big', signed=x_signed))

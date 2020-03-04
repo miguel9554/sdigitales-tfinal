@@ -62,10 +62,39 @@ begin
             reset_checker_stat;
             if run("general_test") then
                 wait for 500 ns;
-                push_stream(net, uart_stream, "01010110");
-                wait for 2025 us;
+                -- XM
                 push_stream(net, uart_stream, "01011110");
-                wait for 2025 us;
+                wait for 100 us;
+                push_stream(net, uart_stream, "01011110");
+                wait for 100 us;
+                -- XL
+                push_stream(net, uart_stream, "01011110");
+                wait for 100 us;
+                push_stream(net, uart_stream, "01011110");
+                wait for 100 us;
+                -- YM
+                push_stream(net, uart_stream, "01011110");
+                wait for 100 us;
+                push_stream(net, uart_stream, "01011110");
+                wait for 100 us;
+                -- YL
+                push_stream(net, uart_stream, "01011110");
+                wait for 100 us;
+                push_stream(net, uart_stream, "01011110");
+                wait for 100 us;
+                -- ZM
+                push_stream(net, uart_stream, "01011110");
+                wait for 100 us;
+                push_stream(net, uart_stream, "01011110");
+                wait for 100 us;
+                -- ZL
+                push_stream(net, uart_stream, "01011110");
+                wait for 100 us;
+                push_stream(net, uart_stream, "01011110");
+                wait for 100 us;
+
+                wait for 50 us;
+
             end if;
         end loop;
         test_runner_cleanup(runner);
