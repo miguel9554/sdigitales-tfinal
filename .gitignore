@@ -1,6 +1,5 @@
 # Ignoramos todo lo de verification salvo los vhdl
-verification/*/*
-!verification/*/*.vhdl
+!rotator/verification/*/*.vhdl
 __pycache__/
 */vunit_out/
 */*/vunit_out/
