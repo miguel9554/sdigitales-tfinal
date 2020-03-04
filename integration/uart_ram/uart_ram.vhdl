@@ -4,7 +4,9 @@ use ieee.numeric_std.all;
 entity uart_ram is
     generic(
         constant DATA_WIDTH      : natural := 16;
-        constant ADDRESS_WIDTH   : natural := 23
+        constant ADDRESS_WIDTH   : natural := 23;
+        constant CYCLES_TO_WAIT  : natural := 4000;
+        constant CYCLES_TO_WAIT_WIDTH : natural := 12
     );
     port(
         clk: in std_logic;
@@ -32,9 +34,6 @@ entity uart_ram is
 end uart_ram;
 
 architecture arch of uart_ram is
-   
-    constant CYCLES_TO_WAIT  : natural := 100;
-    constant CYCLES_TO_WAIT_WIDTH : natural := 7;
 
     signal data_reg: std_logic_vector(7 downto 0);
     signal db_btn: std_logic_vector(3 downto 0);
@@ -55,7 +54,7 @@ architecture arch of uart_ram is
     signal r_data: std_logic_vector(7 downto 0);
 
     -- state machine
-    type state_t is (initial_state, read_with_switch, waiting_for_uart, write_sram, waiting_for_sram);
+    type state_t is (initial_state, read_with_switch, waiting_for_uart, reading_from_uart, write_sram, waiting_for_sram);
     signal state_current, state_next : state_t := initial_state;
     signal address_current, address_next: unsigned(ADDRESS_WIDTH-1 downto 0) := (others => '0');
     signal mem_current, mem_next: std_logic := '0';
@@ -63,6 +62,7 @@ architecture arch of uart_ram is
     signal data_in_current, data_in_next: std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
     signal rd_uart_current, rd_uart_next: std_logic := '0';
     signal cycles_current, cycles_next: unsigned(CYCLES_TO_WAIT_WIDTH-1 downto 0) := to_unsigned(CYCLES_TO_WAIT, CYCLES_TO_WAIT_WIDTH);
+    signal bytes_received_current, bytes_received_next: integer := 0;
 
 begin
 
@@ -135,6 +135,7 @@ begin
         data_in_current <= data_in_next;
         rd_uart_current <= rd_uart_next;
         cycles_current <= cycles_next;
+        bytes_received_current <= bytes_received_next;
         if (db_btn(0)='1') then
             data_from_switch <= sw;
         end if;
@@ -143,7 +144,7 @@ begin
 
     -- next state logic
     process(state_current, rx_empty, r_data, address_current, state_current, rw_current,
-    data_in_current, address_current, db_btn, cycles_current, reset, data_from_switch)
+    data_in_current, address_current, db_btn, cycles_current, reset, data_from_switch, bytes_received_current)
     begin
         mem_next <= '0';
         rd_uart_next <= '0';
@@ -151,6 +152,7 @@ begin
         data_in_next <= data_in_current;
         address_next <= address_current;
         cycles_next <= cycles_current;
+        bytes_received_next <= bytes_received_current;
         case state_current is
             when initial_state =>
                 if cycles_current = to_unsigned(0, CYCLES_TO_WAIT_WIDTH) then
@@ -162,11 +164,22 @@ begin
                 end if;
             when waiting_for_uart =>
                 if rx_empty = '0' then
-                    state_next <= write_sram;
+                    rd_uart_next <= '1';
+                    state_next <= reading_from_uart;
                 elsif db_btn(3) = '1' then
                     state_next <= read_with_switch;
                 else
                     state_next <= waiting_for_uart;
+                end if;
+            when reading_from_uart =>
+                if bytes_received_current = 0 then
+                    data_in_next <= r_data & "00000000";
+                    bytes_received_next <= 1;
+                    state_next <= waiting_for_uart;
+                else
+                    data_in_next <= data_in_current(DATA_WIDTH-1 downto DATA_WIDTH/2) & r_data;
+                    bytes_received_next <= 0;
+                    state_next <= write_sram;
                 end if;
             when read_with_switch =>
                 address_next <= unsigned("0000000000000000" & sw);
@@ -190,9 +203,7 @@ begin
                 end if;
             when write_sram =>
                 mem_next <= '1';
-                rd_uart_next <= '1';
                 rw_next <= '0';
-                data_in_next <= "00000000" & r_data;
                 state_next <= waiting_for_sram;
             when waiting_for_sram =>
                 if ready = '1' then

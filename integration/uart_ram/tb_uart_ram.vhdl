@@ -23,6 +23,8 @@ architecture tb of tb_uart_ram is
     constant clk_period : integer := 20; -- ns
     constant ADDRESS_WIDTH : integer := 23;
     constant DATA_WIDTH : integer := 16;
+    constant CYCLES_TO_WAIT  : natural := 5;
+    constant CYCLES_TO_WAIT_WIDTH : natural := 3;
 
     constant uart_bfm : uart_master_t := new_uart_master(initial_baud_rate => baud_rate);
     constant uart_stream : stream_master_t := as_stream(uart_bfm);
@@ -77,11 +79,12 @@ begin
     dut : entity work.uart_ram
     generic map(
         ADDRESS_WIDTH => ADDRESS_WIDTH,
-        DATA_WIDTH => DATA_WIDTH
+        DATA_WIDTH => DATA_WIDTH,
+        CYCLES_TO_WAIT => CYCLES_TO_WAIT,
+        CYCLES_TO_WAIT_WIDTH => CYCLES_TO_WAIT_WIDTH        
     )
     port map (
         clk => clk,
-        reset=>reset,
         -- uart
         RsRx => RsRx,
         RsTx => RsTx,
