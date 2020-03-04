@@ -140,7 +140,7 @@ begin
 
     output_assignement: process(clk)
     begin
-        if rising_edge(clk) then
+        if (clk'event and clk = '1') then
             X   <=  buffer_X;
             Y   <=  buffer_Y;
             Z   <=  buffer_Z;
