@@ -13,7 +13,8 @@ entity main is
         constant DVSR_BIT: integer:=5; -- # bits of DVSR
         constant COORDS_WIDTH: integer := 32;
         -- ancho del cuadrado donde mostramos el mundo
-        constant SQUARE_WIDTH_IN_BITS: integer := 8
+        constant SQUARE_WIDTH_IN_BITS: integer := 8;
+        constant LINES_TO_RECEIVE: natural := 11946
     );
     port(
         clk: in std_logic;
@@ -48,7 +49,6 @@ end main;
 
 architecture arch of main is
 
-    constant LINES_TO_RECEIVE: natural := 11946;
     constant BYTES_TO_RECEIVE: natural := 12*LINES_TO_RECEIVE;
     
     signal data_reg: std_logic_vector(7 downto 0);
@@ -388,8 +388,8 @@ begin
             addr_a=>video_ram_write_address, addr_b=>video_ram_read_address,
             din_a=>video_ram_data_in, dout_a=>open, dout_b=>video_ram_data_out);
 
-    video_ram_write_address <= std_logic_vector(Y_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-1-SQUARE_WIDTH_IN_BITS) &
-        Z_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-1-SQUARE_WIDTH_IN_BITS));
+    video_ram_write_address <= std_logic_vector(Y_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) &
+        std_logic_vector(Z_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS));
 
     -- leds
     Led <= leds_current;
