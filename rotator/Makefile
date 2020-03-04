@@ -9,9 +9,9 @@ WLIB_NAME  = work-obj93.cf
 RUN_FLAGS = --disp-time
 RUN_FLAGS =
 
-DATA_FILES = $(wildcard $(VER_DIR)*/stimulus.dat)
+DATA_FILES = $(addsuffix /stimulus.dat,$(wildcard $(VER_DIR)*))
 
-SRC_DIRS  = $(wildcard ./src/*)
+SRC_DIRS  = ./src
 SRC_FILES = $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.vhdl))
 
 GHDL_OPTIONS = --std=02 --ieee=synopsys
@@ -27,7 +27,7 @@ TBS_WLIBS = $(addsuffix /$(WLIB_NAME),$(addprefix $(VER_DIR),$(TBS)))
 .PHONY: all
 all:
 	@echo "Must provide one of the following TestBenches:"
-	@$(foreach tb,$(TBS),echo "  "$(tb);)
+	@$(foreach tb,$(SRC_FILES),echo "  "$(tb);)
 	@echo
 
 
@@ -38,7 +38,7 @@ $(TBS_WLIBS):
 	 	ghdl -i $(GHDL_OPTIONS) *.vhdl $(SRC_REL_FILES)
 
 
-$(DATA_FILES): $(VER_DIR)tb_%/stimulus.dat : utils/stimulus_generation/%.py
+$(DATA_FILES): $(VER_DIR)tb_%/stimulus.dat : ../utils/stimulus_generation/%.py
 	@echo "Generating data file for $@"
 	python3 $<
 
