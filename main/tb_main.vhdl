@@ -12,14 +12,14 @@ library vunit_lib;
 context vunit_lib.vunit_context;
 context vunit_lib.vc_context;
 
-entity tb_uart_ram is
+entity tb_main is
   generic (
     runner_cfg : string);
 end entity;
 
-architecture tb of tb_uart_ram is
+architecture tb of tb_main is
   
-    constant baud_rate : integer := 19200; -- bits / s
+    constant baud_rate : integer := 115200; -- bits / s
     constant clk_period : integer := 20; -- ns
     constant ADDRESS_WIDTH : integer := 23;
     constant DATA_WIDTH : integer := 16;
@@ -76,12 +76,13 @@ begin
 
     clk <= not clk after (clk_period/2) * 1 ns;
 
-    dut : entity work.uart_ram
+    dut : entity work.main
     generic map(
         ADDRESS_WIDTH => ADDRESS_WIDTH,
         DATA_WIDTH => DATA_WIDTH,
         CYCLES_TO_WAIT => CYCLES_TO_WAIT,
-        CYCLES_TO_WAIT_WIDTH => CYCLES_TO_WAIT_WIDTH        
+        CYCLES_TO_WAIT_WIDTH => CYCLES_TO_WAIT_WIDTH,
+        LINES_TO_RECEIVE => 1
     )
     port map (
         clk => clk,
@@ -104,7 +105,10 @@ begin
         RamLB => RamLB,
         RamUB => RamUB,
         MemAdr => MemAdr,
-        MemDB => MemDB
+        MemDB => MemDB,
+        -- VGA
+        Hsync => open, Vsync =>open,
+        vgaRed => open, vgaGreen => open, vgaBlue => open
     );
 
   uart_master_bfm : entity vunit_lib.uart_master
