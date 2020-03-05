@@ -91,9 +91,10 @@ begin
                 push_stream(net, uart_stream, "01011110");
                 wait for 100 us;
                 push_stream(net, uart_stream, "01011110");
+                MemDB <= (others => '1');
                 wait for 100 us;
 
-                wait for 50 us;
+                wait for 150 us;
 
             end if;
         end loop;

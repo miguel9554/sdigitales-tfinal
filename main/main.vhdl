@@ -150,10 +150,10 @@ begin
     end process;
 
     -- next state logic
-    process(state_current, rx_empty, r_data, address_current, state_current, rw_current,
+    process(rx_empty, r_data, address_current, state_current, rw_current,
     data_in_current, address_current, db_btn, cycles_current, reset, data_from_switch,
     bytes_received_current, leds_current, byte_position_current, coords_readed_current,
-    X_coord_current, Y_coord_current, Z_coord_current, video_ram_we_current)
+    X_coord_current, Y_coord_current, Z_coord_current, video_ram_we_current, ready, mem_current)
     begin
         -- default values
         mem_next <= '0';
@@ -253,11 +253,17 @@ begin
                     end case;
                     address_next <= address_current + 1;
                     state_next <= process_coords;
+                    cycles_next <= 15;
                 else
                     state_next <= waiting_for_sram_data;
                 end if;
             when process_coords =>
-                state_next <= print_coords;
+                if cycles_current = 0 then
+                    state_next <= print_coords;
+                else
+                    cycles_next <= cycles_current - 1;
+                    state_next <= process_coords;
+                end if;
             when print_coords =>
                 -- ya estan las coordenadas a escribir cargadas, escribo
                 video_ram_we_next <= '1';
@@ -397,10 +403,14 @@ begin
     -- leds
     Led <= leds_current;
 
-    -- Coords
-    X_coord_rotated <= signed(X_coord_current);
-    Y_coord_rotated <= signed(Y_coord_current);
-    Z_coord_rotated <= signed(Z_coord_current);
+   -- instantiate rotator
+   cordic_rotator: entity work.rotator
+   generic map(COORDS_WIDTH=>COORDS_WIDTH+3)
+   port map(
+       clk=>clk, X0=>signed(X_coord_current), Y0=>signed(Y_coord_current), Z0=>signed(Z_coord_current),
+       angle_X=>to_signed(0, 23), angle_Y=>to_signed(0, 23), angle_Z=>to_signed(0, 23),
+       X=>X_coord_rotated, Y=>Y_coord_rotated, Z=>Z_coord_rotated);
+
     -- Le aplicamos un offset a las coordenadas para poder trabajarlas como numeros sin signo
     X_coord_rotated_offset <= unsigned(std_logic_vector(X_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH)));
     Y_coord_rotated_offset <= unsigned(std_logic_vector(Y_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH)));
