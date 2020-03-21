@@ -24,6 +24,8 @@ end entity cordic_stage;
 
 architecture behavioral of cordic_stage is
 
+    attribute S: string;
+
     -- Adder-substractor declaration
     component addsub is
         generic (
@@ -54,6 +56,9 @@ architecture behavioral of cordic_stage is
     signal Yshifted     :   signed( W - 1 downto 0)         := ( others => '0');
     signal sZ           :   signed( ANGLE_W - 1 downto 0)   := ( others => '0');
     signal sNotSigma0   :   std_logic                       := '0';
+
+    attribute S of Xshifted : signal is "YES";
+    attribute S of Yshifted : signal is "YES";
 
 begin
 
