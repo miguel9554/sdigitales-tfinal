@@ -75,9 +75,6 @@ architecture behavioral of rotator is
     signal Z_rotator_Z0     :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
 
     -- Outputs
-    signal output_X          :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
-    signal output_Y          :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
-    signal output_Z          :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
     signal buffer_X          :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
     signal buffer_Y          :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
     signal buffer_Z          :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
