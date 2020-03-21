@@ -405,7 +405,7 @@ begin
 
    -- instantiate rotator
    cordic_rotator: entity work.rotator
-   generic map(COORDS_WIDTH=>COORDS_WIDTH+3)
+   generic map(COORDS_WIDTH=>COORDS_WIDTH)
    port map(
        clk=>clk, X0=>signed(X_coord_current), Y0=>signed(Y_coord_current), Z0=>signed(Z_coord_current),
        angle_X=>to_signed(0, 23), angle_Y=>to_signed(0, 23), angle_Z=>to_signed(0, 23),
