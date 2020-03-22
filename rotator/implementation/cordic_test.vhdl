@@ -57,7 +57,7 @@ architecture behavioral of cordic_test is
 
     signal result_x, result_y: signed(COORDS_WIDTH+COORDS_OFFSET-1 downto 0);
 
-    signal X0, Y0: signed(COORDS_WIDTH+1 downto 0);
+    signal X0, Y0: signed(COORDS_WIDTH+COORDS_OFFSET-1 downto 0);
 
 begin
     
