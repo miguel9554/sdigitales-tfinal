@@ -27,7 +27,7 @@ TBS_WLIBS = $(addsuffix /$(WLIB_NAME),$(addprefix $(VER_DIR),$(TBS)))
 .PHONY: all
 all:
 	@echo "Must provide one of the following TestBenches:"
-	@$(foreach tb,$(SRC_FILES),echo "  "$(tb);)
+	@$(foreach tb,$(TBS),echo "  "$(tb);)
 	@echo
 
 
