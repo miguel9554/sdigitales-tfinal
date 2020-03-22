@@ -26,13 +26,14 @@ architecture behavioral of cordic_test is
     constant LEDS_STATE_IDLE: std_logic_vector(7 downto 0) := "10000001";
     constant LEDS_STATE_LOAD_X: std_logic_vector(7 downto 0) := "00000001";
     constant LEDS_STATE_LOAD_Y: std_logic_vector(7 downto 0) := "00000010";
-    constant LEDS_STATE_LOAD_ANGLE: std_logic_vector(7 downto 0) := "11000011";
+    constant LEDS_STATE_LOAD_ANGLE: std_logic_vector(7 downto 0) := "00000100";
     constant LEDS_STATE_READ_X: std_logic_vector(7 downto 0) := "00000001";
     constant LEDS_STATE_READ_Y: std_logic_vector(7 downto 0) := "00000010";
+    constant LEDS_STATE_READ_ANGLE: std_logic_vector(7 downto 0) := "00000100";
     constant LEDS_STATE_READ_X_RESULT: std_logic_vector(7 downto 0) := "00000001";
     constant LEDS_STATE_READ_Y_RESULT: std_logic_vector(7 downto 0) := "00000010";
 
-    type state_type is (idle, load_x, load_y, read_x, read_y, read_x_result, read_y_result, load_angle);
+    type state_type is (idle, load_x, load_y, load_angle, read_x, read_y, read_angle, read_x_result, read_y_result);
 
     type reg_type is record
         state: state_type;
@@ -40,19 +41,19 @@ architecture behavioral of cordic_test is
         y: std_logic_vector(COORDS_WIDTH-1 downto 0);
         display_data: std_logic_vector(7 downto 0);
         leds: std_logic_vector(7 downto 0);
+        angle: signed(ANGLES_WIDTH-1 downto 0);
     end record;
 
     signal register_current, register_next: reg_type := (
         state => idle,
         x => (others => '0'), y => (others => '0'),
-        display_data => (others => '0'), leds => LEDS_STATE_IDLE
+        display_data => (others => '0'), leds => LEDS_STATE_IDLE,
+        angle => (others => '0')
     );
     -- debounced button
     signal db_btn: std_logic_vector(3 downto 0);
     -- 7 segment display
     signal led1, led0: std_logic_vector(7 downto 0);
-    
-    signal rotation_angle: signed(ANGLES_WIDTH-1 downto 0) := (others => '0');
 
     signal result_x, result_y: signed(COORDS_WIDTH+COORDS_OFFSET-1 downto 0);
 
@@ -74,7 +75,7 @@ begin
         register_next_tmp := register_current;
         case register_current.state is
             when idle =>
-                -- con el botón 0 y los primeros tres sw cargamos una coordenada
+                -- con el botón 0 y los primeros tres sw cargamos una coordenada o el ángulo
                 if db_btn(0) = '1' then
                     case sw(2 downto 0) is
                         when "001" =>
@@ -83,11 +84,14 @@ begin
                         when "010" =>
                             register_next_tmp.state := load_y;
                             register_next_tmp.leds := LEDS_STATE_LOAD_Y;
+                        when "100" =>
+                            register_next_tmp.state := load_angle;
+                            register_next_tmp.leds := LEDS_STATE_LOAD_ANGLE;
                         when others =>
                             register_next_tmp.state := idle;
                             register_next_tmp.leds := LEDS_STATE_IDLE;
                     end case;
-                -- con el botón 1 y los primeros tres sw leemos una coordenada
+                -- con el botón 1 y los primeros tres sw leemos una coordenada o el ángulo
                 elsif db_btn(1) = '1' then
                     case sw(2 downto 0) is
                         when "001" =>
@@ -96,6 +100,9 @@ begin
                         when "010" =>
                             register_next_tmp.state := read_y;
                             register_next_tmp.leds := LEDS_STATE_READ_Y;
+                        when "100" =>
+                            register_next_tmp.state := read_angle;
+                            register_next_tmp.leds := LEDS_STATE_READ_ANGLE;
                         when others =>
                             register_next_tmp.state := idle;
                             register_next_tmp.leds := LEDS_STATE_IDLE;
@@ -113,11 +120,6 @@ begin
                             register_next_tmp.state := idle;
                             register_next_tmp.leds := LEDS_STATE_IDLE;
                     end case;
-                -- con el botón 3 cargamos el ángulo
-                elsif db_btn(3) = '1' then
-                    register_next_tmp.state := load_angle;
-                    register_next_tmp.leds := LEDS_STATE_LOAD_ANGLE;
-                    
                 else
                     register_next_tmp.state := idle;
                     -- dejamos el led anterior, que es el valor que se cargó
@@ -140,9 +142,9 @@ begin
                 end if;
             when load_angle =>
                 if db_btn(3) = '1' then
-                    rotation_angle <= signed("0" & sw(ANGLES_INTEGER_WIDTH-1 downto 0) & std_logic_vector(to_unsigned(0, ANGLES_FRACTIONAL_WIDTH)));
+                    register_next_tmp.angle := signed("0" & sw(ANGLES_INTEGER_WIDTH-1 downto 0) & std_logic_vector(to_unsigned(0, ANGLES_FRACTIONAL_WIDTH)));
                     register_next_tmp.state := idle;
-                    register_next_tmp.leds := "00" & sw(ANGLES_INTEGER_WIDTH-1 downto 0);
+                    register_next_tmp.leds := std_logic_vector(to_unsigned(0, 8-ANGLES_INTEGER_WIDTH)) & sw(ANGLES_INTEGER_WIDTH-1 downto 0);
                 else
                     register_next_tmp.state := load_angle;
                 end if;
@@ -154,6 +156,10 @@ begin
                 register_next_tmp.display_data := register_current.y;
                 register_next_tmp.state := idle;
                 register_next_tmp.leds := register_current.y;
+            when read_angle =>
+                register_next_tmp.display_data := std_logic_vector(to_unsigned(0, 8-(ANGLES_INTEGER_WIDTH+1))) & std_logic_vector(register_current.angle(ANGLES_WIDTH-1 downto ANGLES_WIDTH-(ANGLES_INTEGER_WIDTH+1)));
+                register_next_tmp.state := idle;
+                register_next_tmp.leds := std_logic_vector(to_unsigned(0, 8-(ANGLES_INTEGER_WIDTH+1))) & std_logic_vector(register_current.angle(ANGLES_WIDTH-1 downto ANGLES_WIDTH-(ANGLES_INTEGER_WIDTH+1)));
             when read_x_result =>
                 register_next_tmp.display_data := std_logic_vector(result_x(COORDS_WIDTH+COORDS_OFFSET-1 downto COORDS_OFFSET));
                 register_next_tmp.state := idle;
@@ -214,7 +220,7 @@ begin
     )
     port map(
         X0=>X0, Y0=>Y0,
-        angle=>rotation_angle,
+        angle=>register_current.angle,
         X=>result_x, Y=>result_y);
 
 end behavioral;
