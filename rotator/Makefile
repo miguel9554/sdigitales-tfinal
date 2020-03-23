@@ -27,7 +27,7 @@ TBS_WLIBS = $(addsuffix /$(WLIB_NAME),$(addprefix $(VER_DIR),$(TBS)))
 .PHONY: all
 all:
 	@echo "Must provide one of the following TestBenches:"
-	@$(foreach tb,$(TBS),echo "  "$(tb);)
+	@$(foreach tb,$(TBS_WAVES),echo "  "$(tb);)
 	@echo
 
 
@@ -53,7 +53,7 @@ $(TBS_EXE) : % : %.vhdl $$(dir $$@)$(WLIB_NAME) $(SRC_FILES)
 # Esta regla nos dicen que los waves dependen del ejecutable verification/TESTBENCH/TESTBENCH y de los data files
 # Después, llama al ejecutable pasando como parámetros el nombre de salida del waveform y los run flags
 .SECONDEXPANSION:
-$(TBS_WAVES): $(VER_DIR)%/waves.$(WOF) : $$(subst waves.$$(WOF),,$$@)% $(DATA_FILES)
+$(TBS_WAVES): $(VER_DIR)%/waves.$(WOF) : $$(subst waves.$$(WOF),,$$@)% $(VER_DIR)%/stimulus.dat
 	$< --$(WOF)=$@ $(RUN_FLAGS)
 	@echo "File $< Updated! (Reload Waveform)"
 
