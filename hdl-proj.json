@@ -1,0 +1,17 @@
+{
+    "options": {
+        "ghdl_analysis": [
+            "--workdir=.work",
+            "--std=02",
+            "--ieee=synopsys",
+            "-fexplicit"
+        ]
+    },
+    "folders": [
+        { "path": "main" },
+        { "path": "ram" },
+        { "path": "rotator" },
+        { "path": "uart" },
+        { "path": "vga"}
+    ]
+}
