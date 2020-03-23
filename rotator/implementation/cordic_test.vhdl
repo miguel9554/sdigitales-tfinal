@@ -18,9 +18,7 @@ end cordic_test;
 architecture behavioral of cordic_test is
 
     constant COORDS_WIDTH: integer := 8;
-    constant ANGLES_INTEGER_WIDTH: integer := 6;
-    constant ANGLES_FRACTIONAL_WIDTH: integer := 16;
-    constant ANGLES_WIDTH: integer := 1 + ANGLES_INTEGER_WIDTH + ANGLES_FRACTIONAL_WIDTH;
+    constant ANGLES_INTEGER_WIDTH: integer := 7;
     constant COORDS_OFFSET: integer := 2;
 
     constant LEDS_STATE_IDLE: std_logic_vector(7 downto 0) := "10000001";
@@ -41,7 +39,7 @@ architecture behavioral of cordic_test is
         y: std_logic_vector(COORDS_WIDTH-1 downto 0);
         display_data: std_logic_vector(7 downto 0);
         leds: std_logic_vector(7 downto 0);
-        angle: signed(ANGLES_WIDTH-1 downto 0);
+        angle: signed(ANGLES_INTEGER_WIDTH-1 downto 0);
     end record;
 
     signal register_current, register_next: reg_type := (
@@ -142,7 +140,7 @@ begin
                 end if;
             when load_angle =>
                 if db_btn(3) = '1' then
-                    register_next_tmp.angle := signed("0" & sw(ANGLES_INTEGER_WIDTH-1 downto 0) & std_logic_vector(to_unsigned(0, ANGLES_FRACTIONAL_WIDTH)));
+                    register_next_tmp.angle := signed(sw(ANGLES_INTEGER_WIDTH-1 downto 0));
                     register_next_tmp.state := idle;
                     register_next_tmp.leds := std_logic_vector(to_unsigned(0, 8-ANGLES_INTEGER_WIDTH)) & sw(ANGLES_INTEGER_WIDTH-1 downto 0);
                 else
@@ -157,9 +155,9 @@ begin
                 register_next_tmp.state := idle;
                 register_next_tmp.leds := register_current.y;
             when read_angle =>
-                register_next_tmp.display_data := std_logic_vector(to_unsigned(0, 8-(ANGLES_INTEGER_WIDTH+1))) & std_logic_vector(register_current.angle(ANGLES_WIDTH-1 downto ANGLES_WIDTH-(ANGLES_INTEGER_WIDTH+1)));
+                register_next_tmp.display_data := std_logic_vector(to_unsigned(0, 8-ANGLES_INTEGER_WIDTH)) & std_logic_vector(register_current.angle);
                 register_next_tmp.state := idle;
-                register_next_tmp.leds := std_logic_vector(to_unsigned(0, 8-(ANGLES_INTEGER_WIDTH+1))) & std_logic_vector(register_current.angle(ANGLES_WIDTH-1 downto ANGLES_WIDTH-(ANGLES_INTEGER_WIDTH+1)));
+                register_next_tmp.leds := std_logic_vector(to_unsigned(0, 8-ANGLES_INTEGER_WIDTH)) & std_logic_vector(register_current.angle);
             when read_x_result =>
                 register_next_tmp.display_data := std_logic_vector(result_x(COORDS_WIDTH+COORDS_OFFSET-1 downto COORDS_OFFSET));
                 register_next_tmp.state := idle;
@@ -215,8 +213,7 @@ begin
     cordic_rotator: entity work.cordic
     generic map(
         COORDS_WIDTH            =>  COORDS_WIDTH+COORDS_OFFSET,
-        ANGLES_INTEGER_WIDTH    =>  ANGLES_INTEGER_WIDTH,
-        ANGLES_FRACTIONAL_WIDTH =>  ANGLES_FRACTIONAL_WIDTH
+        ANGLES_INTEGER_WIDTH    =>  ANGLES_INTEGER_WIDTH
     )
     port map(
         X0=>X0, Y0=>Y0,

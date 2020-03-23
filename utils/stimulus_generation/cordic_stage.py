@@ -38,18 +38,16 @@ with open(filepath, 'w') as fp:
         X0 = random.randint(-2**(WIDTH-1), 2**(WIDTH-1)-1)
         Y0 = random.randint(-2**(WIDTH-1), 2**(WIDTH-1)-1)
         Z0 = random.randint(-2**(ANGLE_WIDTH-1), 2**(ANGLE_WIDTH-1)-1)
-        atan = random.randint(0, 45*2**16)
-        sigma0 = random.randint(0, 1)
+        atan = random.randint(0, 45*2**ANGLE_FRACTIONAL_WIDTH)
         step = random.randint(0, 2**(SHIFT_WIDTH)-1)
         
-        X = X0 - round(Y0/(2**step)) if not sigma0 else X0 + round(Y0/(2**step))
-        Y = Y0 + round(X0/(2**step)) if not sigma0 else Y0 - round(X0/(2**step))
-        Z = Z0 - atan if not sigma0 else Z0 + atan
-        sigma = 0 if Z >= 0 else 1
+        X = X0 - round(Y0/(2**step)) if Z0 >= 0 else X0 + round(Y0/(2**step))
+        Y = Y0 + round(X0/(2**step)) if Z0 >= 0 else Y0 - round(X0/(2**step))
+        Z = Z0 - atan if Z0 >= 0 else Z0 + atan
 
         # Check for overflow
 
         if overflow(X, WIDTH) or overflow(Y, WIDTH) or overflow(Z, ANGLE_WIDTH):
             continue
 
-        fp.write(f"{X0} {Y0} {Z0} {sigma0} {atan} {step} {X} {Y} {Z} {sigma}\n")
+        fp.write(f"{X0} {Y0} {Z0} {atan} {step} {X} {Y} {Z}\n")

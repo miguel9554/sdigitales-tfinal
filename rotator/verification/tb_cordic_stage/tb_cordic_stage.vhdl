@@ -1,7 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use std.textio.all;
-use ieee.std_logic_textio.all;
 use ieee.numeric_std.all;
 
 entity tb_cordic_stage is
@@ -18,19 +17,17 @@ architecture behavioral of tb_cordic_stage is
     -- UUT (unit under test) declaration
     component cordic_stage is
         generic (
-            W           : integer;
-            ANGLE_W     : integer;
-            STEP_W      : integer
+            COORDS_WIDTH    : integer;
+            ANGLE_WIDTH     : integer;
+            STEP_WIDTH      : integer
         );
         port (
-            X0, Y0      :   in signed( W - 1 downto 0);
-            Z0          :   in signed( ANGLE_W - 1 downto 0);
-            sigma0      :   in std_logic;
-            atan        :   in signed( ANGLE_W - 1 downto 0);
-            step        :   in unsigned( STEP_W - 1 downto 0);
-            X, Y        :   out signed( W - 1 downto 0);
-            Z           :   out signed( ANGLE_W - 1 downto 0);
-            sigma       :   out std_logic
+            X0, Y0      :   in signed(COORDS_WIDTH-1 downto 0);
+            Z0          :   in signed(ANGLE_WIDTH-1 downto 0);
+            atan        :   in signed(ANGLE_WIDTH-1 downto 0);
+            step        :   in unsigned(STEP_WIDTH-1 downto 0);
+            X, Y        :   out signed(COORDS_WIDTH-1 downto 0);
+            Z           :   out signed(ANGLE_WIDTH-1 downto 0)
         );
     end component cordic_stage;
 
@@ -38,7 +35,6 @@ architecture behavioral of tb_cordic_stage is
     signal sX0      :   signed( WIDTH - 1 downto 0)         := (others => '0');
     signal sY0      :   signed( WIDTH - 1 downto 0)         := (others => '0');
     signal sZ0      :   signed( ANGLE_WIDTH - 1 downto 0)   := (others => '0');
-    signal sSigma0  :   std_logic                           := '0';
     signal sAtan    :   signed( ANGLE_WIDTH - 1 downto 0)   := (others => '0');
     signal sStep    :   unsigned( STEP_WIDTH - 1 downto 0)  := (others => '0');
 
@@ -49,36 +45,31 @@ architecture behavioral of tb_cordic_stage is
     signal sActualY         :   signed( WIDTH - 1 downto 0)         := (others => '0');
     signal sExpectedZ       :   signed( ANGLE_WIDTH - 1 downto 0)   := (others => '0');
     signal sActualZ         :   signed( ANGLE_WIDTH - 1 downto 0)   := (others => '0');
-    signal sExpectedSigma   :   std_logic                           := '0';
-    signal sActualSigma     :   std_logic                           := '0';
 
     -- Reporting metrics
     signal stotalReads  :   integer := 0;
     signal sXerrors     :   integer := 0;
     signal sYerrors     :   integer := 0;
     signal sZerrors     :   integer := 0;
-    signal sSigmaErrors :   integer := 0;
 
 begin
 
     -- UUT (unit under test) instantiation
     uut: cordic_stage
         generic map (
-            W           =>  WIDTH,
-            ANGLE_W     =>  ANGLE_WIDTH,
-            STEP_W      =>  STEP_WIDTH
+            COORDS_WIDTH    =>  WIDTH,
+            ANGLE_WIDTH     =>  ANGLE_WIDTH,
+            STEP_WIDTH      =>  STEP_WIDTH
         )
         port map (
             X0          =>  sX0,
             Y0          =>  sY0,
             Z0          =>  sZ0,
-            sigma0      =>  sSigma0,
             atan        =>  sAtan,
             step        =>  sStep,
             X           =>  sActualX,
             Y           =>  sActualY,
-            Z           =>  sActualZ,
-            sigma       =>  sActualSigma
+            Z           =>  sActualZ
         );
 
     p_read : process
@@ -93,7 +84,6 @@ begin
         variable fX0        :   integer;
         variable fY0        :   integer;
         variable fZ0        :   integer;
-        variable fSigma0    :   integer;
         variable fAtan      :   integer;
         variable fStep      :   integer;
 
@@ -101,7 +91,6 @@ begin
         variable fExpectedX     :   integer;
         variable fExpectedY     :   integer;
         variable fExpectedZ     :   integer;
-        variable fExpectedSigma :   integer;
     
     begin
 
@@ -147,17 +136,6 @@ begin
                 report "Read 'Z0' failed for line: " & text_line.all
                 severity failure;
             sZ0     <=  to_signed(fZ0, sZ0'length);
-
-            read(text_line, c_BUFFER, ok); -- Skip expected space
-            assert ok
-                report "Read space separator failed for line: " & text_line.all
-                severity failure;
-
-            read(text_line, fSigma0, ok); -- Read Sigma0
-            assert ok
-                report "Read 'Sigma0' failed for line: " & text_line.all
-                severity failure;
-            sSigma0     <=  std_logic(to_unsigned(fSigma0, 1)(0));
 
             read(text_line, c_BUFFER, ok); -- Skip expected space
             assert ok
@@ -218,17 +196,6 @@ begin
                 severity failure;
             sExpectedZ      <=  to_signed(fExpectedZ, sExpectedZ'length);
 
-            read(text_line, c_BUFFER, ok); -- Skip expected space
-            assert ok
-                report "Read space separator failed for line: " & text_line.all
-                severity failure;
-
-            read(text_line, fExpectedSigma, ok); -- Read Sigma
-            assert ok
-                report "Read 'ExpectedSigma' failed for line: " & text_line.all
-                severity failure;
-            sExpectedSigma      <=  std_logic(to_unsigned(fExpectedSigma, 1)(0));
-
             wait for WAIT_TIME;
 
             assert (sExpectedX      = sActualX)     report "ERROR (X): expected " & integer'image(to_integer(sExpectedX))       & ", got " & integer'image(to_integer(sActualX))        severity ERROR;
@@ -242,10 +209,6 @@ begin
             assert (sExpectedZ      = sActualZ)     report "ERROR (Z): expected " & integer'image(to_integer(sExpectedZ))       & ", got " & integer'image(to_integer(sActualZ))        severity ERROR;
             if (sExpectedZ /= sActualZ) then
                 sZerrors    <=  sZerrors + 1;
-            end if;
-            assert (sExpectedSigma  = sActualSigma) report "ERROR (Sigma): expected " & integer'image(to_integer(unsigned'('0' & sExpectedSigma)))  & ", got " & integer'image(to_integer(unsigned'('0' & sActualSigma)))   severity ERROR;
-            if (sExpectedSigma /= sActualSigma) then
-                sSigmaErrors    <=  sSigmaErrors + 1;
             end if;
 
             read(text_line, c_BUFFER, ok); -- Skip expected newline
@@ -270,7 +233,6 @@ begin
         report "X errors: " & integer'image(sXerrors);
         report "Y errors: " & integer'image(sYerrors);
         report "Z errors: " & integer'image(sZerrors);
-        report "Sigma errors: " & integer'image(sSigmaErrors);
 
         wait for WAIT_TIME; -- este wait no tiene funcion, pero si no está, pero lo ponemos porque en el waveform de salida no aparece el último time event
 

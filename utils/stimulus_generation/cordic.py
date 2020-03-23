@@ -35,29 +35,35 @@ class cordic():
         return int(math.floor(number))
 
     def rotate(self, X0, Y0, angle):
+        
         X_old = X0
         Y_old = Y0
-        Z_old = angle
-        sigma_old = 0 if angle >= 0 else 1
-
+        # Z es el valor de punto fijo del ángulo
+        Z_old = angle*2**self.angle_fractional_width
 
         for step in range(self.stages):
 
-            X = X_old - self.floor_round(Y_old/(2**step)) if not sigma_old else X_old + self.floor_round(Y_old/(2**step))
-            Y = Y_old + self.floor_round(X_old/(2**step)) if not sigma_old else Y_old - self.floor_round(X_old/(2**step))
-            Z = Z_old - self.atan_fixed_point[step] if not sigma_old else Z_old + self.atan_fixed_point[step]
-            sigma = 0 if Z >= 0 else 1
+            X = X_old - self.floor_round(Y_old/(2**step)) if Z_old >= 0 else X_old + self.floor_round(Y_old/(2**step))
+            Y = Y_old + self.floor_round(X_old/(2**step)) if Z_old >= 0 else Y_old - self.floor_round(X_old/(2**step))
+            Z = Z_old - self.atan_fixed_point[step] if Z_old >= 0 else Z_old + self.atan_fixed_point[step]
+            # if self.overflow(X, self.coords_width) or self.overflow(Y, self.coords_width) or self.overflow(Z, self.coords_width):
+            if self.overflow(X, self.coords_width + self.offset_coords_width) or self.overflow(Y, self.coords_width + self.offset_coords_width) or self.overflow(Z, self.angle_width):
+                raise OverflowError
 
             X_old = X
             Y_old = Y
             Z_old = Z
-            sigma_old = sigma
 
         X = self.floor_round(X*self.rounded_cordic_scale_factor)
         Y = self.floor_round(Y*self.rounded_cordic_scale_factor)
 
         return X, Y
 
+    def overflow(self, number, width):
+        if -2**(width-1) <= number <= 2**(width-1)-1:
+            return False
+        else:
+            return True
 
 def main():
 
@@ -75,8 +81,10 @@ def main():
     OFFSET_VHDL_COORDS_WIDTH = 2
 
     # Width, in bits, of the integer part of angles
-    ANGLE_INTEGER_WIDTH = 6
+    # queda en 8 para ir de -90 a 90 grados
+    ANGLE_INTEGER_WIDTH = 8
     # Width, in bits, of the fractional part of angles
+    # esto tiene importancia nada más para la precisión de la atan, el ángulo de entrada no tiene parte fraccional
     ANGLE_FRACTIONAL_WIDTH = 16
     # Total width, in bits, of angles
     ANGLE_WIDTH = ANGLE_INTEGER_WIDTH + ANGLE_FRACTIONAL_WIDTH + 1
@@ -92,11 +100,15 @@ def main():
 
             X0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
             Y0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
-            angle = random.randint(-2**(ANGLE_WIDTH-1), 2**(ANGLE_WIDTH-1)-1)
+            # el ángulo es número entero, el módulo se encarga de pasarlo a una representación de punto fijo
+            angle = random.randint(-90, 90)
 
-            X, Y = cordic_instace.rotate(X0, Y0, angle)
+            try:
+                X, Y = cordic_instace.rotate(X0, Y0, angle)
 
-            fp.write(f"{X0} {Y0} {angle} {X} {Y}\n")
+                fp.write(f"{X0} {Y0} {angle} {X} {Y}\n")
+            except OverflowError:
+                print('overflow ñero')
 
 if __name__ == "__main__":
     main()
