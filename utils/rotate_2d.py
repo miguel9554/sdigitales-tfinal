@@ -2,21 +2,27 @@ import argparse
 import stimulus_generation.cordic
 import math
 
-def parse_string_value(value: str):
+
+def parse_string_value(value: str, width: int):
     if 'x' in value:
-        return_value = int(value, 16)
+        return_value = twos_complement(bin(int(value, 16)).split('b')[1])
     elif 'b' in value:
-        return_value =int(value, 2)
+        return_value = twos_complement(value.split('b')[1])
     else:
         return_value = int(value)
-    if (return_value > 2**8) or (return_value < 0):
-        exit('Las coordenadas tienen que ser de 8 bits!')
-    else:
+    if -2**(width-1) <= return_value <= 2**(width-1)-1:
         return return_value
+    else:
+        exit(f'Las coordenadas tienen que ser de {width} bits!')
 
 def bindigits(n, bits):
     s = bin(n & int("1"*bits, 2))[2:]
     return ("{0:0>%s}" % (bits)).format(s)
+
+def twos_complement(val_str):
+    val = int(val_str, 2)
+    b = val.to_bytes(1, byteorder='big', signed=False)
+    return int.from_bytes(b, byteorder='big', signed=True)
 
 
 parser = argparse.ArgumentParser(description='Rota tres coordenadas. Útil para usar con el test de implementación del rotador.')
@@ -25,9 +31,6 @@ parser.add_argument('Y0', metavar='Y0', type=str, help='Coordenada Y inicial')
 parser.add_argument('angle', metavar='alfa0', type=str, help='Angulo a rotar')
 
 args = parser.parse_args()
-X0 = parse_string_value(args.X0)
-Y0 = parse_string_value(args.Y0)
-angle = parse_string_value(args.angle)
 
 # Width, in bits, of coordinates
 COORDINATES_WIDTH = 8
@@ -35,7 +38,7 @@ COORDINATES_WIDTH = 8
 OFFSET_VHDL_COORDS_WIDTH = 2
 
 # Width, in bits, of the integer part of angles
-ANGLE_INTEGER_WIDTH = 6
+ANGLE_INTEGER_WIDTH = 8
 # Width, in bits, of the fractional part of angles
 ANGLE_FRACTIONAL_WIDTH = 16
 # Total width, in bits, of angles
@@ -44,7 +47,11 @@ ANGLE_WIDTH = ANGLE_INTEGER_WIDTH + ANGLE_FRACTIONAL_WIDTH + 1
 cordic_instace = stimulus_generation.cordic.cordic(coords_width=COORDINATES_WIDTH, offset_coords_width=OFFSET_VHDL_COORDS_WIDTH, 
     angle_integer_width=ANGLE_INTEGER_WIDTH, angle_fractional_width=ANGLE_FRACTIONAL_WIDTH)
 
-X, Y = cordic_instace.rotate(X0, Y0, angle*2**ANGLE_FRACTIONAL_WIDTH)
+X0 = parse_string_value(args.X0, COORDINATES_WIDTH)
+Y0 = parse_string_value(args.Y0, COORDINATES_WIDTH)
+angle = parse_string_value(args.angle, ANGLE_INTEGER_WIDTH)
+
+X, Y = cordic_instace.rotate(X0, Y0, angle)
 Xr = X0*math.cos(angle*math.pi/180) - Y0*math.sin(angle*math.pi/180)
 Yr = X0*math.sin(angle*math.pi/180) + Y0*math.cos(angle*math.pi/180)
 
