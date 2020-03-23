@@ -12,6 +12,7 @@ entity main is
                             -- DVSR = 50M/(16*baud rate)
         constant DVSR_BIT: integer:=5; -- # bits of DVSR
         constant COORDS_WIDTH: integer := 32;
+        constant ANGLE_WIDTH: integer := 8;
         -- ancho del cuadrado donde mostramos el mundo
         constant SQUARE_WIDTH_IN_BITS: integer := 8;
         constant LINES_TO_RECEIVE: natural := 11946
@@ -107,13 +108,13 @@ architecture arch of main is
     signal Y_coord_current, Y_coord_next: std_logic_vector(COORDS_WIDTH-1 downto 0) := (others => '0');
     signal Z_coord_current, Z_coord_next: std_logic_vector(COORDS_WIDTH-1 downto 0) := (others => '0');
     -- Coordenadas rotadas
-    signal X_coord_rotated: signed(COORDS_WIDTH-1 downto 0) := (others => '0');
-    signal Y_coord_rotated: signed(COORDS_WIDTH-1 downto 0) := (others => '0');
-    signal Z_coord_rotated: signed(COORDS_WIDTH-1 downto 0) := (others => '0');
+    signal X_coord_rotated: signed(COORDS_WIDTH-1 downto 0);
+    signal Y_coord_rotated: signed(COORDS_WIDTH-1 downto 0);
+    signal Z_coord_rotated: signed(COORDS_WIDTH-1 downto 0);
     -- Coordenadas rotadas y con offset
-    signal X_coord_rotated_offset: unsigned(COORDS_WIDTH-1 downto 0) := (others => '0');
-    signal Y_coord_rotated_offset: unsigned(COORDS_WIDTH-1 downto 0) := (others => '0');
-    signal Z_coord_rotated_offset: unsigned(COORDS_WIDTH-1 downto 0) := (others => '0');
+    signal X_coord_rotated_offset: unsigned(COORDS_WIDTH-1 downto 0);
+    signal Y_coord_rotated_offset: unsigned(COORDS_WIDTH-1 downto 0);
+    signal Z_coord_rotated_offset: unsigned(COORDS_WIDTH-1 downto 0);
     -- video ram
     signal video_ram_we_current, video_ram_we_next: std_logic := '0';
     signal pixel_current, pixel_next: std_logic_vector(0 downto 0) := (others => '0');
@@ -405,10 +406,13 @@ begin
 
    -- instantiate rotator
    cordic_rotator: entity work.rotator
-   generic map(COORDS_WIDTH=>COORDS_WIDTH)
+   generic map(
+       COORDS_WIDTH=>COORDS_WIDTH,
+       ANGLES_INTEGER_WIDTH=>ANGLE_WIDTH
+    )
    port map(
        clk=>clk, X0=>signed(X_coord_current), Y0=>signed(Y_coord_current), Z0=>signed(Z_coord_current),
-       angle_X=>to_signed(0, 23), angle_Y=>to_signed(0, 23), angle_Z=>to_signed(0, 23),
+       angle_X=>to_signed(0, ANGLE_WIDTH), angle_Y=>to_signed(0, ANGLE_WIDTH), angle_Z=>to_signed(0, ANGLE_WIDTH),
        X=>X_coord_rotated, Y=>Y_coord_rotated, Z=>Z_coord_rotated);
 
     -- Le aplicamos un offset a las coordenadas para poder trabajarlas como numeros sin signo
