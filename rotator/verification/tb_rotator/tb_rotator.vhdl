@@ -1,7 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use std.textio.all;
-use ieee.std_logic_textio.all;
 use ieee.numeric_std.all;
 
 entity tb_rotator is
@@ -11,9 +10,7 @@ architecture behavioral of tb_rotator is
 
     -- Constants
     constant COORDS_WIDTH               :   integer := 32;
-    constant ANGLES_INTEGER_WIDTH       :   integer := 6;
-    constant ANGLES_FRACTIONAL_WIDTH    :   integer := 16;
-    constant ANGLES_WIDTH               :   integer := ANGLES_FRACTIONAL_WIDTH+ANGLES_INTEGER_WIDTH+1;
+    constant ANGLES_INTEGER_WIDTH       :   integer := 8;
     constant STAGES                     :   integer := 16;
     constant CLK_PERIOD                 :   time    := 50 ns;
 
@@ -22,25 +19,24 @@ architecture behavioral of tb_rotator is
         generic (
             COORDS_WIDTH            : integer;
             ANGLES_INTEGER_WIDTH    : integer;
-            ANGLES_FRACTIONAL_WIDTH : integer;
             STAGES                  : integer
         );
         port (
             clk                         :   in std_logic;
             X0, Y0, Z0                  :   in signed(COORDS_WIDTH-1 downto 0);
-            angle_X, angle_Y, angle_Z   :   in signed(ANGLES_FRACTIONAL_WIDTH+ANGLES_INTEGER_WIDTH downto 0);
+            angle_X, angle_Y, angle_Z   :   in signed(ANGLES_INTEGER_WIDTH-1 downto 0);
             X, Y, Z                     :   out signed(COORDS_WIDTH-1 downto 0)
         );
     end component rotator;
 
     -- Inputs
-    signal sClk     :   std_logic                           := '0';
-    signal sX0      :   signed(COORDS_WIDTH-1 downto 0)     := (others => '0');
-    signal sY0      :   signed(COORDS_WIDTH-1 downto 0)     := (others => '0');
-    signal sZ0      :   signed(COORDS_WIDTH-1 downto 0)     := (others => '0');
-    signal sAngle_X :   signed(ANGLES_WIDTH-1 downto 0)     := (others => '0');
-    signal sAngle_Y :   signed(ANGLES_WIDTH-1 downto 0)     := (others => '0');
-    signal sAngle_Z :   signed(ANGLES_WIDTH-1 downto 0)     := (others => '0');
+    signal sClk     :   std_logic                               := '0';
+    signal sX0      :   signed(COORDS_WIDTH-1 downto 0)         := (others => '0');
+    signal sY0      :   signed(COORDS_WIDTH-1 downto 0)         := (others => '0');
+    signal sZ0      :   signed(COORDS_WIDTH-1 downto 0)         := (others => '0');
+    signal sAngle_X :   signed(ANGLES_INTEGER_WIDTH-1 downto 0) := (others => '0');
+    signal sAngle_Y :   signed(ANGLES_INTEGER_WIDTH-1 downto 0) := (others => '0');
+    signal sAngle_Z :   signed(ANGLES_INTEGER_WIDTH-1 downto 0) := (others => '0');
 
     -- Outputs
     signal sExpectedX   :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
@@ -63,7 +59,6 @@ begin
         generic map (
             COORDS_WIDTH            =>  COORDS_WIDTH,
             ANGLES_INTEGER_WIDTH    =>  ANGLES_INTEGER_WIDTH,
-            ANGLES_FRACTIONAL_WIDTH =>  ANGLES_FRACTIONAL_WIDTH,
             STAGES                  =>  STAGES
         )
         port map (
