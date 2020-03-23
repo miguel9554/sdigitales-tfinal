@@ -6,13 +6,12 @@ entity Ry is
 
     generic (
         COORDS_WIDTH            : integer := 10;
-        ANGLES_INTEGER_WIDTH    : integer := 6;
-        ANGLES_FRACTIONAL_WIDTH : integer := 16;
+        ANGLES_INTEGER_WIDTH    : integer := 8;
         STAGES                  : integer := 16
     );
     port (
         X0, Y0, Z0      :   in signed(COORDS_WIDTH-1 downto 0);
-        angle           :   in signed(ANGLES_FRACTIONAL_WIDTH+ANGLES_INTEGER_WIDTH downto 0);
+        angle           :   in signed(ANGLES_INTEGER_WIDTH-1 downto 0);
         X, Y, Z         :   out signed(COORDS_WIDTH-1 downto 0)
     );
 
@@ -25,12 +24,11 @@ architecture behavioral of Ry is
         generic (
             COORDS_WIDTH            : integer;
             ANGLES_INTEGER_WIDTH    : integer;
-            ANGLES_FRACTIONAL_WIDTH : integer;
             STAGES                  : integer
         );
         port (
             X0, Y0          :   in signed(COORDS_WIDTH-1 downto 0);
-            angle           :   in signed(ANGLES_FRACTIONAL_WIDTH+ANGLES_INTEGER_WIDTH downto 0);
+            angle           :   in signed(ANGLES_INTEGER_WIDTH-1 downto 0);
             X, Y            :   out signed(COORDS_WIDTH-1 downto 0)
         );
     end component cordic;
@@ -42,7 +40,6 @@ begin
         generic map (
             COORDS_WIDTH            =>  COORDS_WIDTH,
             ANGLES_INTEGER_WIDTH    =>  ANGLES_INTEGER_WIDTH,
-            ANGLES_FRACTIONAL_WIDTH =>  ANGLES_FRACTIONAL_WIDTH,
             STAGES                  =>  STAGES
         )
         port map (

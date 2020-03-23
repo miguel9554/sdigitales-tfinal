@@ -20,7 +20,7 @@ def main():
     OFFSET_VHDL_COORDS_WIDTH = 2
 
     # Width, in bits, of the integer part of angles
-    ANGLE_INTEGER_WIDTH = 6
+    ANGLE_INTEGER_WIDTH = 8
     # Width, in bits, of the fractional part of angles
     ANGLE_FRACTIONAL_WIDTH = 16
     # Total width, in bits, of angles
@@ -38,7 +38,7 @@ def main():
             X0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
             Y0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
             Z0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
-            angle = random.randint(-2**(ANGLE_WIDTH-1), 2**(ANGLE_WIDTH-1)-1)
+            angle = random.randint(-90, 90)
 
             Z, X = cordic_instace.rotate(Z0, X0, angle)
             Y = Y0
