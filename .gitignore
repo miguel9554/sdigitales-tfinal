@@ -1,7 +1,9 @@
 # Ignoramos todo lo de verification salvo los vhdl
+rotator/verification/*/*
 !rotator/verification/*/*.vhdl
 __pycache__/
 */vunit_out/
 */*/vunit_out/
 */*/*/vunit_out/
 utils/output.txt
+.vscode/
