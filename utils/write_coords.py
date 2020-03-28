@@ -1,9 +1,13 @@
 import serial
+import pathlib
+
 
 COORDS_WIDTH = 31
 LINES_TO_SEND = 11946
 
-with open('coordenadas.txt') as fp, serial.Serial('/dev/ttyUSB0', 115200, timeout=1) as ser:
+filepath = pathlib.Path(__file__).absolute().parent / 'coordenadas.txt' 
+
+with open(filepath) as fp, serial.Serial('/dev/ttyUSB0', 115200, timeout=1) as ser:
     
     for line_number, line in enumerate(fp):
         
