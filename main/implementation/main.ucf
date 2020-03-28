@@ -1,3 +1,4 @@
+NET CLK PERIOD = 20 HIGH 5;
 ## This file is a general .ucf for Nexys2 rev A board
 ## To use it in a project:
 ## - remove or comment the lines corresponding to unused pins
