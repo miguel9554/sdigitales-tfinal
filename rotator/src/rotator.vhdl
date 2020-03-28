@@ -20,82 +20,51 @@ end entity rotator;
 
 architecture behavioral of rotator is
 
-    -- X rotator declaration
-    component rx is
+    -- Cordic declaration
+    component cordic is
         generic (
             COORDS_WIDTH            : integer;
             ANGLES_INTEGER_WIDTH    : integer;
             STAGES                  : integer
         );
         port (
-            X0, Y0, Z0      :   in signed(COORDS_WIDTH-1 downto 0);
+            X0, Y0          :   in signed(COORDS_WIDTH-1 downto 0);
             angle           :   in signed(ANGLES_INTEGER_WIDTH-1 downto 0);
-            X, Y, Z         :   out signed(COORDS_WIDTH-1 downto 0)
+            X, Y            :   out signed(COORDS_WIDTH-1 downto 0)
         );
-    end component rx;
+    end component cordic;
 
-    -- Y rotator declaration
-    component ry is
-        generic (
-            COORDS_WIDTH            : integer;
-            ANGLES_INTEGER_WIDTH    : integer;
-            STAGES                  : integer
-        );
-        port (
-            X0, Y0, Z0      :   in signed(COORDS_WIDTH-1 downto 0);
-            angle           :   in signed(ANGLES_INTEGER_WIDTH-1 downto 0);
-            X, Y, Z         :   out signed(COORDS_WIDTH-1 downto 0)
-        );
-    end component ry;
-
-    -- Z rotator declaration
-    component rz is
-        generic (
-            COORDS_WIDTH            : integer;
-            ANGLES_INTEGER_WIDTH    : integer;
-            STAGES                  : integer
-        );
-        port (
-            X0, Y0, Z0      :   in signed(COORDS_WIDTH-1 downto 0);
-            angle           :   in signed(ANGLES_INTEGER_WIDTH-1 downto 0);
-            X, Y, Z         :   out signed(COORDS_WIDTH-1 downto 0)
-        );
-    end component rz;
 
     -- Buffer signal
-    signal Y_rotator_X0     :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
-    signal Y_rotator_Y0     :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
-    signal Y_rotator_Z0     :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
-    signal Z_rotator_X0     :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
-    signal Z_rotator_Y0     :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
-    signal Z_rotator_Z0     :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
+    signal Y_rotator_X0     :   signed(COORDS_WIDTH-1 downto 0);
+    signal Z_rotator_X0     :   signed(COORDS_WIDTH-1 downto 0);
+    signal Z_rotator_Y0     :   signed(COORDS_WIDTH-1 downto 0);
 
     -- Outputs
-    signal buffer_X          :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
-    signal buffer_Y          :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
-    signal buffer_Z          :   signed(COORDS_WIDTH-1 downto 0) := (others => '0');
+    signal buffer_X          :   signed(COORDS_WIDTH-1 downto 0);
+    signal buffer_Y          :   signed(COORDS_WIDTH-1 downto 0);
+    signal buffer_Z          :   signed(COORDS_WIDTH-1 downto 0);
 
 begin
     
     -- X rotator instantiation
-    x_rotator: rx
+    x_rotator: cordic
         generic map (
             COORDS_WIDTH            =>  COORDS_WIDTH,
             ANGLES_INTEGER_WIDTH    =>  ANGLES_INTEGER_WIDTH,
             STAGES                  =>  STAGES
         )
         port map (
-            X0          =>  X0,
-            Y0          =>  Y0,
-            Z0          =>  Z0,
+            X0          =>  Y0,
+            Y0          =>  Z0,
             angle       =>  angle_X,
-            X           =>  Y_rotator_X0,
-            Y           =>  Y_rotator_Y0,
-            Z           =>  Y_rotator_Z0
+            X           =>  Z_rotator_Y0,
+            Y           =>  Y_rotator_X0
         );
 
+
     -- Y rotator instantiation
-    y_rotator: ry
+    y_rotator: cordic
         generic map (
             COORDS_WIDTH            =>  COORDS_WIDTH,
             ANGLES_INTEGER_WIDTH    =>  ANGLES_INTEGER_WIDTH,
@@ -103,16 +72,15 @@ begin
         )
         port map (
             X0          =>  Y_rotator_X0,
-            Y0          =>  Y_rotator_Y0,
-            Z0          =>  Y_rotator_Z0,
+            Y0          =>  X0,
             angle       =>  angle_Y,
-            X           =>  Z_rotator_X0,
-            Y           =>  Z_rotator_Y0,
-            Z           =>  Z_rotator_Z0
+            X           =>  buffer_Z,
+            Y           =>  Z_rotator_X0
         );
 
+
     -- Z rotator instantiation
-    z_rotator: rz
+    z_rotator: cordic
         generic map (
             COORDS_WIDTH            =>  COORDS_WIDTH,
             ANGLES_INTEGER_WIDTH    =>  ANGLES_INTEGER_WIDTH,
@@ -121,12 +89,11 @@ begin
         port map (
             X0          =>  Z_rotator_X0,
             Y0          =>  Z_rotator_Y0,
-            Z0          =>  Z_rotator_Z0,
             angle       =>  angle_Z,
             X           =>  buffer_X,
-            Y           =>  buffer_Y,
-            Z           =>  buffer_Z
+            Y           =>  buffer_Y
         );
+
 
     output_assignement: process(clk)
     begin

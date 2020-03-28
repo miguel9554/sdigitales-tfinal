@@ -24,9 +24,10 @@ architecture behavioral of cordic is
     constant ANGLES_FRACTIONAL_WIDTH : integer := 16;
     constant ANGLES_WIDTH           :   integer := ANGLES_INTEGER_WIDTH+ANGLES_FRACTIONAL_WIDTH;
     constant CORDIC_SCALE_FACTOR    :   real    := 0.607252935;
+    constant MAX_STAGES: natural := 16;
 
     -- Types
-    type rom_type is array (0 to STAGES-1) of signed(ANGLES_WIDTH-1 downto 0);
+    type rom_type is array (0 to MAX_STAGES-1) of signed(ANGLES_WIDTH-1 downto 0);
     type coordinates_array is array (0 to STAGES) of signed(COORDS_WIDTH-1 downto 0);
     type angles_array is array (0 to STAGES) of signed(ANGLES_WIDTH-1 downto 0);
 
