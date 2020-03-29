@@ -3,7 +3,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity cordic is
-
     generic (
         COORDS_WIDTH            : integer := 10;
         ANGLES_INTEGER_WIDTH    : integer := 7;
@@ -14,7 +13,6 @@ entity cordic is
         angle           :   in signed(ANGLES_INTEGER_WIDTH-1 downto 0);
         X, Y            :   out signed(COORDS_WIDTH-1 downto 0)
     );
-
 end entity cordic;
 
 architecture behavioral of cordic is
