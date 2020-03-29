@@ -36,17 +36,49 @@ architecture behavioral of rotator is
 
 
     -- Buffer signal
-    signal Y_rotator_X0     :   signed(COORDS_WIDTH-1 downto 0);
+    signal X_rotator_X0     :   signed(COORDS_WIDTH-1 downto 0);
+    signal X_rotator_Y0     :   signed(COORDS_WIDTH-1 downto 0);
+    signal X_angle          :   signed(ANGLES_INTEGER_WIDTH-1 downto 0);
+    signal X_rotator_X      :   signed(COORDS_WIDTH-1 downto 0);
+    signal X_rotator_Y      :   signed(COORDS_WIDTH-1 downto 0);
+
+    signal y_rotator_X0     :   signed(COORDS_WIDTH-1 downto 0);
+    signal Y_rotator_Y0     :   signed(COORDS_WIDTH-1 downto 0);
+    signal Y_angle          :   signed(ANGLES_INTEGER_WIDTH-1 downto 0);
+    signal Y_rotator_X      :   signed(COORDS_WIDTH-1 downto 0);
+    signal Y_rotator_Y      :   signed(COORDS_WIDTH-1 downto 0);
+
     signal Z_rotator_X0     :   signed(COORDS_WIDTH-1 downto 0);
     signal Z_rotator_Y0     :   signed(COORDS_WIDTH-1 downto 0);
-
-    -- Outputs
-    signal buffer_X          :   signed(COORDS_WIDTH-1 downto 0);
-    signal buffer_Y          :   signed(COORDS_WIDTH-1 downto 0);
-    signal buffer_Z          :   signed(COORDS_WIDTH-1 downto 0);
+    signal Z_angle          :   signed(ANGLES_INTEGER_WIDTH-1 downto 0);
+    signal Z_rotator_X      :   signed(COORDS_WIDTH-1 downto 0);
+    signal Z_rotator_Y      :   signed(COORDS_WIDTH-1 downto 0);
 
 begin
-    
+
+    process(clk)
+    begin
+        if (clk'event and clk='1') then
+            
+            X_rotator_X0 <= Y0;
+            X_rotator_Y0 <= X0;
+            X_angle <= angle_X;
+
+            Y_rotator_X0 <= X_rotator_Y;
+            Y_rotator_Y0 <= X0;
+            Y_angle <= angle_Y;
+
+            Z_rotator_X0 <= Y_rotator_Y;
+            Z_rotator_Y0 <= X_rotator_X;
+            Z_angle <= angle_Z;
+
+            X <= Z_rotator_X;
+            Y <= Z_rotator_Y;
+            Z <= Y_rotator_X;
+
+        end if;
+    end process;    
+
     -- X rotator instantiation
     x_rotator: cordic
         generic map (
@@ -55,13 +87,12 @@ begin
             STAGES                  =>  STAGES
         )
         port map (
-            X0          =>  Y0,
-            Y0          =>  Z0,
-            angle       =>  angle_X,
-            X           =>  Z_rotator_Y0,
-            Y           =>  Y_rotator_X0
+            X0          =>  X_rotator_X0,
+            Y0          =>  X_rotator_Y0,
+            angle       =>  X_angle,
+            X           =>  X_rotator_X,
+            Y           =>  X_rotator_Y
         );
-
 
     -- Y rotator instantiation
     y_rotator: cordic
@@ -72,12 +103,11 @@ begin
         )
         port map (
             X0          =>  Y_rotator_X0,
-            Y0          =>  X0,
-            angle       =>  angle_Y,
-            X           =>  buffer_Z,
-            Y           =>  Z_rotator_X0
+            Y0          =>  Y_rotator_Y0,
+            angle       =>  Y_angle,
+            X           =>  Y_rotator_X,
+            Y           =>  Y_rotator_Y
         );
-
 
     -- Z rotator instantiation
     z_rotator: cordic
@@ -89,19 +119,9 @@ begin
         port map (
             X0          =>  Z_rotator_X0,
             Y0          =>  Z_rotator_Y0,
-            angle       =>  angle_Z,
-            X           =>  buffer_X,
-            Y           =>  buffer_Y
+            angle       =>  Z_angle,
+            X           =>  Z_rotator_X,
+            Y           =>  Z_rotator_Y
         );
-
-
-    output_assignement: process(clk)
-    begin
-        if (clk'event and clk = '1') then
-            X   <=  buffer_X;
-            Y   <=  buffer_Y;
-            Z   <=  buffer_Z;
-        end if;
-    end process;
 
 end architecture behavioral;
