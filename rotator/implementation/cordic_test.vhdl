@@ -18,7 +18,7 @@ end cordic_test;
 architecture behavioral of cordic_test is
 
     constant COORDS_WIDTH: integer := 8;
-    constant ANGLES_INTEGER_WIDTH: integer := 7;
+    constant ANGLES_INTEGER_WIDTH: integer := 8;
     constant COORDS_OFFSET: integer := 2;
     constant STAGES: integer := 8;
 
@@ -32,6 +32,17 @@ architecture behavioral of cordic_test is
     constant LEDS_STATE_READ_X_RESULT: std_logic_vector(7 downto 0) := "00000001";
     constant LEDS_STATE_READ_Y_RESULT: std_logic_vector(7 downto 0) := "00000010";
 
+    COMPONENT dcm
+	PORT(
+		CLKIN_IN : IN std_logic;
+		RST_IN : IN std_logic;          
+		CLKDV_OUT : OUT std_logic;
+		CLKIN_IBUFG_OUT : OUT std_logic;
+		CLK0_OUT : OUT std_logic;
+		LOCKED_OUT : OUT std_logic
+		);
+	END COMPONENT;
+
     type state_type is (idle, load_x, load_y, load_angle, read_x, read_y, read_angle, read_x_result, read_y_result);
 
     type reg_type is record
@@ -41,40 +52,53 @@ architecture behavioral of cordic_test is
         display_data: std_logic_vector(7 downto 0);
         leds: std_logic_vector(7 downto 0);
         angle: signed(ANGLES_INTEGER_WIDTH-1 downto 0);
+        result_x, result_y: signed(COORDS_WIDTH+COORDS_OFFSET-1 downto 0);
     end record;
 
     signal register_current, register_next: reg_type := (
         state => idle,
         x => x"cf", y => x"ef",
         display_data => (others => '0'), leds => LEDS_STATE_IDLE,
-        angle => to_signed(13, ANGLES_INTEGER_WIDTH)
+        angle => to_signed(13, ANGLES_INTEGER_WIDTH),
+        result_x => (others => 'Z'), result_y => (others => 'Z')
     );
     -- debounced button
     signal db_btn: std_logic_vector(3 downto 0);
     -- 7 segment display
     signal led1, led0: std_logic_vector(7 downto 0);
 
-    signal result_x, result_y: signed(COORDS_WIDTH+COORDS_OFFSET-1 downto 0);
-
     signal X0, Y0: signed(COORDS_WIDTH+COORDS_OFFSET-1 downto 0);
+
+    signal clk_25: std_logic;
 
 begin
     
-    sequential: process(clk)
+    sequential: process(clk_25)
     begin
-        if (clk'event and clk = '1') then
+        if (clk_25'event and clk_25 = '1') then
             register_current <= register_next;
         end if;
     end process sequential;
 
-    combinational: process(register_current, db_btn, sw, result_x, result_y)
+	Inst_dcm: dcm PORT MAP(
+		CLKIN_IN => clk,
+		RST_IN => '0',
+		CLKDV_OUT => clk_25,
+		CLKIN_IBUFG_OUT => open,
+		CLK0_OUT => open,
+		LOCKED_OUT => open
+	);
+
+    combinational: process(register_current, db_btn, sw)
         variable register_next_tmp: reg_type;
     begin
         -- default value
         register_next_tmp := register_current;
+        register_next_tmp.result_X := (others => 'Z');
+        register_next_tmp.result_Y := (others => 'Z');
         case register_current.state is
             when idle =>
-                -- con el botÃ³n 0 y los primeros tres sw cargamos una coordenada o el Ã¡ngulo
+                -- con el botón 0 y los primeros tres sw cargamos una coordenada o el ángulo
                 if db_btn(0) = '1' then
                     case sw(2 downto 0) is
                         when "001" =>
@@ -90,7 +114,7 @@ begin
                             register_next_tmp.state := idle;
                             register_next_tmp.leds := LEDS_STATE_IDLE;
                     end case;
-                -- con el botÃ³n 1 y los primeros tres sw leemos una coordenada o el Ã¡ngulo
+                -- con el botón 0 y los primeros tres sw leemos una coordenada o el ángulo
                 elsif db_btn(1) = '1' then
                     case sw(2 downto 0) is
                         when "001" =>
@@ -106,7 +130,7 @@ begin
                             register_next_tmp.state := idle;
                             register_next_tmp.leds := LEDS_STATE_IDLE;
                     end case;
-                -- con el botÃ³n 2 y los primeros tres sw leemos el resultado
+                -- con el botón 2 y los primeros tres sw leemos el resultado
                 elsif db_btn(2) = '1' then
                     case sw(2 downto 0) is
                         when "001" =>
@@ -121,7 +145,7 @@ begin
                     end case;
                 else
                     register_next_tmp.state := idle;
-                    -- dejamos el led anterior, que es el valor que se cargÃ³
+                    -- dejamos el led anterior, que es el valor que se cargó
                 end if;
             when load_x =>
                 if db_btn(3) = '1' then
@@ -143,7 +167,7 @@ begin
                 if db_btn(3) = '1' then
                     register_next_tmp.angle := signed(sw(ANGLES_INTEGER_WIDTH-1 downto 0));
                     register_next_tmp.state := idle;
-                    register_next_tmp.leds := std_logic_vector(to_unsigned(0, 8-ANGLES_INTEGER_WIDTH)) & sw(ANGLES_INTEGER_WIDTH-1 downto 0);
+                    register_next_tmp.leds := sw(ANGLES_INTEGER_WIDTH-1 downto 0);
                 else
                     register_next_tmp.state := load_angle;
                 end if;
@@ -156,17 +180,17 @@ begin
                 register_next_tmp.state := idle;
                 register_next_tmp.leds := register_current.y;
             when read_angle =>
-                register_next_tmp.display_data := std_logic_vector(to_unsigned(0, 8-ANGLES_INTEGER_WIDTH)) & std_logic_vector(register_current.angle);
+                register_next_tmp.display_data := std_logic_vector(register_current.angle);
                 register_next_tmp.state := idle;
-                register_next_tmp.leds := std_logic_vector(to_unsigned(0, 8-ANGLES_INTEGER_WIDTH)) & std_logic_vector(register_current.angle);
+                register_next_tmp.leds := std_logic_vector(register_current.angle);
             when read_x_result =>
-                register_next_tmp.display_data := std_logic_vector(result_x(COORDS_WIDTH+COORDS_OFFSET-1 downto COORDS_OFFSET));
+                register_next_tmp.display_data := std_logic_vector(register_current.result_x(COORDS_WIDTH+COORDS_OFFSET-1 downto COORDS_OFFSET));
                 register_next_tmp.state := idle;
-                register_next_tmp.leds := std_logic_vector(result_x(COORDS_WIDTH+COORDS_OFFSET-1 downto COORDS_OFFSET));
+                register_next_tmp.leds := std_logic_vector(register_current.result_x(COORDS_WIDTH+COORDS_OFFSET-1 downto COORDS_OFFSET));
             when read_y_result =>
-                register_next_tmp.display_data := std_logic_vector(result_y(COORDS_WIDTH+COORDS_OFFSET-1 downto COORDS_OFFSET));
+                register_next_tmp.display_data := std_logic_vector(register_current.result_y(COORDS_WIDTH+COORDS_OFFSET-1 downto COORDS_OFFSET));
                 register_next_tmp.state := idle;
-                register_next_tmp.leds := std_logic_vector(result_y(COORDS_WIDTH+COORDS_OFFSET-1 downto COORDS_OFFSET));
+                register_next_tmp.leds := std_logic_vector(register_current.result_y(COORDS_WIDTH+COORDS_OFFSET-1 downto COORDS_OFFSET));
         end case;
         register_next <= register_next_tmp;
     end process combinational;
@@ -176,22 +200,22 @@ begin
     -- debounce units
     debounce_unit0: entity work.debounce
         port map(
-            clk=>clk, reset=>'0', sw=>btn(0),
+            clk=>clk_25, reset=>'0', sw=>btn(0),
             db_level=>open, db_tick=>db_btn(0)
         );
     debounce_unit1: entity work.debounce
     port map(
-        clk=>clk, reset=>'0', sw=>btn(1),
+        clk=>clk_25, reset=>'0', sw=>btn(1),
         db_level=>open, db_tick=>db_btn(1)
     );
     debounce_unit2: entity work.debounce
     port map(
-        clk=>clk, reset=>'0', sw=>btn(2),
+        clk=>clk_25, reset=>'0', sw=>btn(2),
         db_level=>open, db_tick=>db_btn(2)
     );
     debounce_unit3: entity work.debounce
     port map(
-        clk=>clk, reset=>'0', sw=>btn(3),
+        clk=>clk_25, reset=>'0', sw=>btn(3),
         db_level=>open, db_tick=>db_btn(3)
     );
 
@@ -204,7 +228,7 @@ begin
     -- instantiate 7-seg LED display time-multiplexing module
     disp_unit: entity work.disp_mux
         port map(
-            clk=>clk, reset=>'0',
+            clk=>clk_25, reset=>'0',
             in0=>led0, in1=>led1, in2=>(others => '1'), in3=>(others => '1'),
             an=>an, sseg=>sseg);
 
@@ -220,6 +244,6 @@ begin
     port map(
         X0=>X0, Y0=>Y0,
         angle=>register_current.angle,
-        X=>result_x, Y=>result_y);
+        X=>register_next.result_x, Y=>register_next.result_y);
 
 end behavioral;
