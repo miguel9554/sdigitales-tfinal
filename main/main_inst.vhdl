@@ -7,8 +7,8 @@ entity main_inst is
         constant DATA_WIDTH      : natural := 16;
         constant ADDRESS_WIDTH   : natural := 23;
         constant CYCLES_TO_WAIT  : natural := 4000;
-        constant DVSR: integer:= 27;  -- baud rate divisor
-                            -- DVSR = 50M/(16*baud rate)
+        constant DVSR: integer:= 14;  -- baud rate divisor
+                            -- DVSR = 25M/(16*baud rate) (está dividido el clock)
         constant DVSR_BIT: integer:=5; -- # bits of DVSR
         constant COORDS_WIDTH: integer := 32;
         constant ANGLE_WIDTH: integer := 8;
@@ -20,6 +20,7 @@ entity main_inst is
     );
     port(
         clk: in std_logic;
+        clk_vga: in std_logic;
         -- uart
         RsRx: in std_logic;
         RsTx: out std_logic;
@@ -50,9 +51,33 @@ entity main_inst is
 end main_inst;
 
 architecture arch of main_inst is
+    
+    COMPONENT dcm
+	PORT(
+		CLKIN_IN : IN std_logic;
+		RST_IN : IN std_logic;          
+		CLKDV_OUT : OUT std_logic;
+		CLKIN_IBUFG_OUT : OUT std_logic;
+		CLK0_OUT : OUT std_logic;
+		LOCKED_OUT : OUT std_logic
+		);
+    END COMPONENT;
+    
+    signal clk_divided: std_logic;
+    signal clk0: std_logic;
+
 begin
 
-   -- instantiate main
+    Inst_dcm: dcm PORT MAP(
+		CLKIN_IN => clk,
+		RST_IN => '0',
+		CLKDV_OUT => clk_divided,
+		CLKIN_IBUFG_OUT => open,
+		CLK0_OUT => clk0,
+		LOCKED_OUT => open
+	);
+   
+    -- instantiate main
     main_module: entity work.main
     generic map(
         DATA_WIDTH => DATA_WIDTH,
@@ -68,7 +93,8 @@ begin
         CYCLES_TO_WAIT_CORDIC => CYCLES_TO_WAIT_CORDIC
     )
     port map(
-        clk => clk,
+        clk => clk_divided,
+        clk_vga => clk0,
         RsRx => RsRx,
         RsTx => RsTx,
         sw => sw,

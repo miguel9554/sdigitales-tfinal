@@ -20,6 +20,7 @@ entity main is
     );
     port(
         clk: in std_logic;
+        clk_vga: in std_logic;
         -- uart
         RsRx: in std_logic;
         RsTx: out std_logic;
@@ -371,7 +372,7 @@ begin
 
     vga_sync_unit: entity work.vga_sync
         port map(
-            clk=>clk, reset=>reset,
+            clk=>clk_vga, reset=>reset,
             hsync=>Hsync, vsync=>Vsync,
             video_on=>video_on, p_tick=>pixel_tick,
             pixel_x=>pixel_x, pixel_y=>pixel_y);
