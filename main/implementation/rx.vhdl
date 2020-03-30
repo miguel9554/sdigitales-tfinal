@@ -1,1 +1,0 @@
-../../rotator/src/rx.vhdl
