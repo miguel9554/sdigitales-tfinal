@@ -73,8 +73,12 @@ begin
             Y           =>  sActualY,
             Z           =>  sActualZ
         );
+    
+    sClk <= not sClk after CLK_PERIOD/2;
 
     p_read : process
+
+        variable waiting: natural := 1;
     
         -- Reading related variables
         file data_file              : text open read_mode is "verification/tb_rotator/stimulus.dat";
@@ -96,8 +100,6 @@ begin
         variable fExpectedZ     :   integer;
     
     begin
-
-        wait for CLK_PERIOD;    -- Para evitar bug de comparación cuando las salidas están indefinidas
 
         while not endfile(data_file) loop
             
@@ -182,8 +184,7 @@ begin
                 severity failure;
 
             
-            sClk    <=  '1';
-            wait for CLK_PERIOD/2;
+            wait for CLK_PERIOD*10;
 
 
             -- READ OUTPUTS
@@ -232,7 +233,6 @@ begin
                 sZerrors    <=  sZerrors + 1;
             end if;
 
-            sClk    <=  '0';
             wait for CLK_PERIOD/2;
 
         end loop;
