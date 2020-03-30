@@ -12,7 +12,7 @@ def main():
     random.seed(54)
 
     # Number of test cases to generate
-    NUMBER_OF_TESTS = 1000
+    NUMBER_OF_TESTS = 10
 
     # Width, in bits, of coordinates
     COORDINATES_WIDTH = 30
