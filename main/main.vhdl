@@ -7,7 +7,6 @@ entity main is
         constant DATA_WIDTH      : natural := 16;
         constant ADDRESS_WIDTH   : natural := 23;
         constant CYCLES_TO_WAIT  : natural := 4000;
-        constant CYCLES_TO_WAIT_WIDTH : natural := 12;
         constant DVSR: integer:= 27;  -- baud rate divisor
                             -- DVSR = 50M/(16*baud rate)
         constant DVSR_BIT: integer:=5; -- # bits of DVSR
@@ -16,7 +15,8 @@ entity main is
         -- ancho del cuadrado donde mostramos el mundo
         constant SQUARE_WIDTH_IN_BITS: integer := 9;
         constant LINES_TO_RECEIVE: natural := 11946;
-        constant STAGES: integer := 8
+        constant STAGES: integer := 8;
+        constant CYCLES_TO_WAIT_CORDIC: natural := 20
     );
     port(
         clk: in std_logic;
@@ -261,7 +261,7 @@ begin
                             coords_readed_next <= coords_readed_current + 1;
                             address_next <= address_current + 1;
                             state_next <= process_coords;
-                            cycles_next <= 15;
+                            cycles_next <= CYCLES_TO_WAIT_CORDIC;
                         when others =>
                             hex_data <= (others => '1');
                             byte_position_next <= 0;
