@@ -90,7 +90,7 @@ architecture arch of main is
     -- state machine
     type state_t is (initial_state, read_from_sram, waiting_for_uart,
     reading_from_uart, write_sram, waiting_for_sram, uart_end_data_reception,
-    waiting_for_sram_data, idle, print_coords, read_with_switch);
+    waiting_for_sram_data, idle, process_coords, print_coords, read_with_switch);
     signal state_current, state_next : state_t := initial_state;
     signal address_current, address_next: natural := 0;
     signal mem_current, mem_next: std_logic := '0';
@@ -100,7 +100,7 @@ architecture arch of main is
     signal cycles_current, cycles_next: natural := CYCLES_TO_WAIT;
     signal bytes_received_current, bytes_received_next: natural := 0;
     signal leds_current, leds_next: std_logic_vector(7 downto 0) := (others => '0');
-    -- Esta variable representa cuantas coordenadas leímos de la SRAM
+    -- Esta variable representa cuantas coordenadas leÃ­mos de la SRAM
     signal coords_readed_current, coords_readed_next: natural := 0;
     -- Esta variable representa en que byte estamos de la coordenada, sirve para decodificar si estamos en X, Y o Z
     signal byte_position_current, byte_position_next: natural := 0;
@@ -155,8 +155,7 @@ begin
     process(rx_empty, r_data, address_current, state_current, rw_current,
     data_in_current, address_current, db_btn, cycles_current, reset, data_from_switch,
     bytes_received_current, leds_current, byte_position_current, coords_readed_current,
-    X_coord_current, Y_coord_current, Z_coord_current, video_ram_we_current, ready,
-    mem_current, data_out)
+    X_coord_current, Y_coord_current, Z_coord_current, video_ram_we_current, ready, mem_current)
     begin
         -- default values
         mem_next <= '0';
@@ -217,12 +216,16 @@ begin
                 leds_next <= (others => '1');
                 address_next <= 0;
             when read_from_sram =>
-                mem_next <= '1';
-                rw_next <= '1';
-                state_next <= waiting_for_sram_data;
+                if coords_readed_current = LINES_TO_RECEIVE then
+                    state_next <= idle;
+                else
+                    mem_next <= '1';
+                    rw_next <= '1';
+                    state_next <= waiting_for_sram_data;
+                end if;
             when waiting_for_sram_data =>
                 if mem_current = '1' then
-                    -- así evitamos el glitch de ready en el primer ciclo de lectura
+                    -- asÃ­ evitamos el glitch de ready en el primer ciclo de lectura
                     state_next <= waiting_for_sram_data;
                 elsif ready = '1' then
                     -- asignamos el valor a la coordenada correspondiente
@@ -251,13 +254,14 @@ begin
                             Z_coord_next <= data_out & "0000000000000000";
                             byte_position_next <= byte_position_current + 1;
                             address_next <= address_current + 1;
-                            state_next <= print_coords;
+                            state_next <= read_from_sram;
                         when 5 =>
                             Z_coord_next <= Z_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH/2) & data_out;
                             byte_position_next <= 0;
                             coords_readed_next <= coords_readed_current + 1;
                             address_next <= address_current + 1;
-                            state_next <= print_coords;
+                            state_next <= process_coords;
+                            cycles_next <= 15;
                         when others =>
                             hex_data <= (others => '1');
                             byte_position_next <= 0;
@@ -265,6 +269,13 @@ begin
                     end case;
                 else
                     state_next <= waiting_for_sram_data;
+                end if;
+            when process_coords =>
+                if cycles_current = 0 then
+                    state_next <= print_coords;
+                else
+                    cycles_next <= cycles_current - 1;
+                    state_next <= process_coords;
                 end if;
             when print_coords =>
                 -- ya estan las coordenadas a escribir cargadas, escribo
@@ -370,7 +381,7 @@ begin
 
     -- defino donde es mi bitmap, donde voy a dibujar el mundo
     bitmap_on <= '1' when (pix_x <= 2**SQUARE_WIDTH_IN_BITS) and (pix_y <= 2**SQUARE_WIDTH_IN_BITS) else '0';
-    -- dirección de lectura de la ram de video
+    -- direcciÃ³n de lectura de la ram de video
     video_ram_read_address <= std_logic_vector(pix_y(SQUARE_WIDTH_IN_BITS-1 downto 0) & pix_x(SQUARE_WIDTH_IN_BITS-1 downto 0));
 
    -- rgb multiplexing circuit
@@ -399,31 +410,33 @@ begin
             addr_a=>video_ram_write_address, addr_b=>video_ram_read_address,
             din_a=>video_ram_data_in, dout_a=>open, dout_b=>video_ram_data_out);
 
-    video_ram_write_address <= Z_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS) &
-        Y_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS);
+    video_ram_write_address <= Z_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS) & 
+    Y_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS);
 
     -- leds
     Led <= leds_current;
 
    -- instantiate rotator
-   cordic_rotator: entity work.rotator
-   generic map(
-       COORDS_WIDTH => COORDS_WIDTH,
-       ANGLES_INTEGER_WIDTH => ANGLE_WIDTH,
-       STAGES => STAGES
+    cordic_rotator: entity work.rotator
+    generic map(
+        COORDS_WIDTH=>COORDS_WIDTH,
+        ANGLES_INTEGER_WIDTH=>ANGLE_WIDTH,
+        STAGES=>STAGES
     )
-   port map(
-       clk=>clk, X0=>signed(X_coord_current), Y0=>signed(Y_coord_current), Z0=>signed(Z_coord_current),
-       angle_X=>to_signed(0, ANGLE_WIDTH), angle_Y=>to_signed(0, ANGLE_WIDTH), angle_Z=>to_signed(0, ANGLE_WIDTH),
-       X=>X_coord_rotated, Y=>Y_coord_rotated, Z=>Z_coord_rotated);
+    port map(
+        clk=>clk, X0=>signed(X_coord_current), Y0=>signed(Y_coord_current), Z0=>signed(Z_coord_current),
+        angle_X=>to_signed(0, ANGLE_WIDTH), angle_Y=>to_signed(0, ANGLE_WIDTH), angle_Z=>to_signed(0, ANGLE_WIDTH),
+        X=>X_coord_rotated, Y=>Y_coord_rotated, Z=>Z_coord_rotated
+    );
 
     -- Le aplicamos un offset a las coordenadas para poder trabajarlas como numeros sin signo
-    X_coord_rotated_offset <= std_logic_vector(X_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
-    Y_coord_rotated_offset <= std_logic_vector(Y_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
-    Z_coord_rotated_offset <= std_logic_vector(Z_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+    --X_coord_rotated_offset <= std_logic_vector(X_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+    --Y_coord_rotated_offset <= std_logic_vector(Y_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+    --Z_coord_rotated_offset <= std_logic_vector(Z_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
 
-    --X_coord_rotated_offset <= std_logic_vector(signed(X_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
-    --Y_coord_rotated_offset <= std_logic_vector(signed(Y_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
-    --Z_coord_rotated_offset <= std_logic_vector(signed(Z_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+    X_coord_rotated_offset <= std_logic_vector(signed(X_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+    Y_coord_rotated_offset <= std_logic_vector(signed(Y_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+    Z_coord_rotated_offset <= std_logic_vector(signed(Z_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+
 
 end arch;
