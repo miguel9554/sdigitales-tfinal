@@ -36,6 +36,7 @@ args = parser.parse_args()
 COORDINATES_WIDTH = 8
 # VHDL_COORDINATES_WIDTH - PYTHON_COORDINATES_WIDTH (how many more bits are used in the vhdl testbench)
 OFFSET_VHDL_COORDS_WIDTH = 2
+STAGES = 8
 
 # Width, in bits, of the integer part of angles
 ANGLE_INTEGER_WIDTH = 8
@@ -44,7 +45,7 @@ ANGLE_FRACTIONAL_WIDTH = 16
 # Total width, in bits, of angles
 ANGLE_WIDTH = ANGLE_INTEGER_WIDTH + ANGLE_FRACTIONAL_WIDTH + 1
 
-cordic_instace = stimulus_generation.cordic.cordic(coords_width=COORDINATES_WIDTH, offset_coords_width=OFFSET_VHDL_COORDS_WIDTH, 
+cordic_instace = stimulus_generation.cordic.cordic(stages=STAGES, coords_width=COORDINATES_WIDTH, offset_coords_width=OFFSET_VHDL_COORDS_WIDTH, 
     angle_integer_width=ANGLE_INTEGER_WIDTH, angle_fractional_width=ANGLE_FRACTIONAL_WIDTH)
 
 X0 = parse_string_value(args.X0, COORDINATES_WIDTH)
