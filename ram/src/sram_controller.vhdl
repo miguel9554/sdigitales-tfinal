@@ -73,8 +73,9 @@ begin
 
    -- next-state logic
     process(state_current, data_f2s_current, data_s2f_current,
-    address_current, ready_current, we_current, ce_current, tri_current, cycles_to_wait_current,
-    mem, rw, address_in, data_in, count_current)
+    address_current, ready_current, we_current, ce_current, 
+    tri_current, cycles_to_wait_current, mem, rw, address_in,
+    data_in, count_current, data_to_sram)
     begin
         address_next <= address_current;
         data_f2s_next <= data_f2s_current;
