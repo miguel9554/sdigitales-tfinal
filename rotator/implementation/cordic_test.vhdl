@@ -20,6 +20,7 @@ architecture behavioral of cordic_test is
     constant COORDS_WIDTH: integer := 8;
     constant ANGLES_INTEGER_WIDTH: integer := 7;
     constant COORDS_OFFSET: integer := 2;
+    constant STAGES: integer := 8;
 
     constant LEDS_STATE_IDLE: std_logic_vector(7 downto 0) := "10000001";
     constant LEDS_STATE_LOAD_X: std_logic_vector(7 downto 0) := "00000001";
@@ -44,9 +45,9 @@ architecture behavioral of cordic_test is
 
     signal register_current, register_next: reg_type := (
         state => idle,
-        x => (others => '0'), y => (others => '0'),
+        x => x"cf", y => x"ef",
         display_data => (others => '0'), leds => LEDS_STATE_IDLE,
-        angle => (others => '0')
+        angle => to_signed(13, ANGLES_INTEGER_WIDTH)
     );
     -- debounced button
     signal db_btn: std_logic_vector(3 downto 0);
@@ -213,7 +214,8 @@ begin
     cordic_rotator: entity work.cordic
     generic map(
         COORDS_WIDTH            =>  COORDS_WIDTH+COORDS_OFFSET,
-        ANGLES_INTEGER_WIDTH    =>  ANGLES_INTEGER_WIDTH
+        ANGLES_INTEGER_WIDTH    =>  ANGLES_INTEGER_WIDTH,
+        STAGES                  =>  STAGES
     )
     port map(
         X0=>X0, Y0=>Y0,
