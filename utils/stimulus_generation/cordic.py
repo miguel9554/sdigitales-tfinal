@@ -86,10 +86,9 @@ def main():
     # Width, in bits, of the fractional part of angles
     # esto tiene importancia nada más para la precisión de la atan, el ángulo de entrada no tiene parte fraccional
     ANGLE_FRACTIONAL_WIDTH = 16
-    # Total width, in bits, of angles
-    ANGLE_WIDTH = ANGLE_INTEGER_WIDTH + ANGLE_FRACTIONAL_WIDTH + 1
+    STAGES = 8
 
-    cordic_instace = cordic(coords_width=COORDINATES_WIDTH, offset_coords_width=OFFSET_VHDL_COORDS_WIDTH, 
+    cordic_instace = cordic(stages=STAGES, coords_width=COORDINATES_WIDTH, offset_coords_width=OFFSET_VHDL_COORDS_WIDTH, 
         angle_integer_width=ANGLE_INTEGER_WIDTH, angle_fractional_width=ANGLE_FRACTIONAL_WIDTH)
 
     with open(filepath, 'w') as fp:

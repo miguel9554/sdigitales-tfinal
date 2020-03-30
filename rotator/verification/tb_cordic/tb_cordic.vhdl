@@ -11,7 +11,7 @@ architecture behavioral of tb_cordic is
     -- Constants
     constant COORDS_WIDTH               :   integer := 32;
     constant ANGLES_INTEGER_WIDTH       :   integer := 8;
-    constant STAGES                     :   integer := 2;
+    constant STAGES                     :   integer := 8;
     constant WAIT_TIME                  :   time    := 50 ns;
 
     -- UUT (unit under test) declaration
