@@ -61,7 +61,7 @@ begin
         if (clk'event and clk='1') then
             
             X_rotator_X0 <= Y0;
-            X_rotator_Y0 <= X0;
+            X_rotator_Y0 <= Z0;
             X_angle <= angle_X;
 
             Y_rotator_X0 <= X_rotator_Y;
