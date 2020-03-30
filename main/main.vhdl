@@ -70,7 +70,7 @@ architecture arch of main is
 
     -- seven segment
     signal led3, led2, led1, led0: std_logic_vector(7 downto 0);
-    signal hex_data: std_logic_vector(15 downto 0) := (others => '0');
+    signal hex_data_current, hex_data_next: std_logic_vector(15 downto 0);
 
     -- ram
     signal data_in: std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
@@ -143,6 +143,7 @@ begin
         Y_coord_current <= Y_coord_next;
         Z_coord_current <= Z_coord_next;
         video_ram_we_current <= video_ram_we_next;
+        hex_data_current <= hex_data_next;
         if (db_btn(0)='1') then
             data_from_switch <= sw;
         end if;
@@ -156,7 +157,8 @@ begin
     process(rx_empty, r_data, address_current, state_current, rw_current,
     data_in_current, address_current, db_btn, cycles_current, reset, data_from_switch,
     bytes_received_current, leds_current, byte_position_current, coords_readed_current,
-    X_coord_current, Y_coord_current, Z_coord_current, video_ram_we_current, ready, mem_current)
+    X_coord_current, Y_coord_current, Z_coord_current, video_ram_we_current, ready,
+    mem_current, hex_data_current, data_out)
     begin
         -- default values
         mem_next <= '0';
@@ -173,6 +175,7 @@ begin
         Y_coord_next <= Y_coord_current;
         Z_coord_next <= Z_coord_current;
         video_ram_we_next <= '0';
+        hex_data_next <= hex_data_current;
         case state_current is
             when initial_state =>
                 if cycles_current = 0 then
@@ -264,7 +267,7 @@ begin
                             state_next <= process_coords;
                             cycles_next <= CYCLES_TO_WAIT_CORDIC;
                         when others =>
-                            hex_data <= (others => '1');
+                            hex_data_next <= (others => '1');
                             byte_position_next <= 0;
                             state_next <= idle;
                     end case;
@@ -283,10 +286,10 @@ begin
                 video_ram_we_next <= '1';
                 state_next <= read_from_sram;
             when idle =>
-                hex_data <= "0101" & "0101" & "0101" & "0101";
+                hex_data_next <= "0101" & "0101" & "0101" & "0101";
                 state_next <= read_with_switch;
             when read_with_switch =>
-                hex_data <= data_out;
+                hex_data_next <= data_out;
                 address_next <= to_integer(unsigned("0000000000000000" & sw));
                 if db_btn(1)='1' then -- write
                     mem_next <= '1';
@@ -336,13 +339,13 @@ begin
 
     -- instantiate four instances of hex decoders
     sseg_unit_0: entity work.hex_to_sseg
-        port map(hex=>hex_data(3 downto 0), dp =>'1', sseg=>led0);
+        port map(hex=>hex_data_current(3 downto 0), dp =>'1', sseg=>led0);
     sseg_unit_1: entity work.hex_to_sseg
-        port map(hex=>hex_data(7 downto 4), dp =>'1', sseg=>led1);
+        port map(hex=>hex_data_current(7 downto 4), dp =>'1', sseg=>led1);
     sseg_unit_2: entity work.hex_to_sseg
-        port map(hex=>hex_data(11 downto 8), dp =>'1', sseg=>led2);
+        port map(hex=>hex_data_current(11 downto 8), dp =>'1', sseg=>led2);
     sseg_unit_3: entity work.hex_to_sseg
-        port map(hex=>hex_data(15 downto 12), dp =>'1', sseg=>led3);
+        port map(hex=>hex_data_current(15 downto 12), dp =>'1', sseg=>led3);
 
     -- instantiate 7-seg LED display time-multiplexing module
     disp_unit: entity work.disp_mux
@@ -431,13 +434,13 @@ begin
     );
 
     -- Le aplicamos un offset a las coordenadas para poder trabajarlas como numeros sin signo
-    --X_coord_rotated_offset <= std_logic_vector(X_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
-    --Y_coord_rotated_offset <= std_logic_vector(Y_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
-    --Z_coord_rotated_offset <= std_logic_vector(Z_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+    X_coord_rotated_offset <= std_logic_vector(X_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+    Y_coord_rotated_offset <= std_logic_vector(Y_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+    Z_coord_rotated_offset <= std_logic_vector(Z_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
 
-    X_coord_rotated_offset <= std_logic_vector(signed(X_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
-    Y_coord_rotated_offset <= std_logic_vector(signed(Y_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
-    Z_coord_rotated_offset <= std_logic_vector(signed(Z_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+    --X_coord_rotated_offset <= std_logic_vector(signed(X_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+    --Y_coord_rotated_offset <= std_logic_vector(signed(Y_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+    --Z_coord_rotated_offset <= std_logic_vector(signed(Z_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
 
 
 end arch;
