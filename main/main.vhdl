@@ -114,9 +114,9 @@ architecture arch of main is
     signal Y_coord_rotated: signed(COORDS_WIDTH-1 downto 0);
     signal Z_coord_rotated: signed(COORDS_WIDTH-1 downto 0);
     -- Coordenadas rotadas y con offset
-    signal X_coord_rotated_offset: std_logic_vector(COORDS_WIDTH-1 downto 0);
-    signal Y_coord_rotated_offset: std_logic_vector(COORDS_WIDTH-1 downto 0);
-    signal Z_coord_rotated_offset: std_logic_vector(COORDS_WIDTH-1 downto 0);
+    signal X_coord_rotated_offset: std_logic_vector(SQUARE_WIDTH_IN_BITS-1 downto 0);
+    signal Y_coord_rotated_offset: std_logic_vector(SQUARE_WIDTH_IN_BITS-1 downto 0);
+    signal Z_coord_rotated_offset: std_logic_vector(SQUARE_WIDTH_IN_BITS-1 downto 0);
     -- video ram
     signal video_ram_we_current, video_ram_we_next: std_logic := '0';
     signal pixel_current, pixel_next: std_logic_vector(0 downto 0) := (others => '0');
@@ -414,8 +414,7 @@ begin
             addr_a=>video_ram_write_address, addr_b=>video_ram_read_address,
             din_a=>video_ram_data_in, dout_a=>open, dout_b=>video_ram_data_out);
 
-    video_ram_write_address <= Z_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS) & 
-    Y_coord_rotated_offset(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS);
+    video_ram_write_address <= Z_coord_rotated_offset & Y_coord_rotated_offset;
 
     -- leds
     Led <= leds_current;
@@ -434,13 +433,12 @@ begin
     );
 
     -- Le aplicamos un offset a las coordenadas para poder trabajarlas como numeros sin signo
-    X_coord_rotated_offset <= std_logic_vector(X_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
-    Y_coord_rotated_offset <= std_logic_vector(Y_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
-    Z_coord_rotated_offset <= std_logic_vector(Z_coord_rotated + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
-
-    --X_coord_rotated_offset <= std_logic_vector(signed(X_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
-    --Y_coord_rotated_offset <= std_logic_vector(signed(Y_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
-    --Z_coord_rotated_offset <= std_logic_vector(signed(Z_coord_current) + to_signed(-(2**(COORDS_WIDTH-1)), COORDS_WIDTH));
+    --X_coord_rotated_offset <= std_logic_vector(X_coord_rotated(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+    --Y_coord_rotated_offset <= std_logic_vector(Y_coord_rotated(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+    --Z_coord_rotated_offset <= std_logic_vector(Z_coord_rotated(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+    X_coord_rotated_offset <= std_logic_vector(signed(X_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+    Y_coord_rotated_offset <= std_logic_vector(signed(Y_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+    Z_coord_rotated_offset <= std_logic_vector(signed(Z_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
 
 
 end arch;
