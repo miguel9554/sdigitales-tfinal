@@ -48,7 +48,7 @@ def twos_complement(val_str):
     return int.from_bytes(b, byteorder='big', signed=True)
 
 
-parser = argparse.ArgumentParser(description='Rota tres coordenadas. Útil para usar con el test de implementación del rotador.')
+parser = argparse.ArgumentParser(description='Rota tres coordenadas, útil para verificar validez de datos y conversion entre cantidad de bits.'
 parser.add_argument('X0', metavar='X0', type=str, help='Coordenada X inicial')
 parser.add_argument('Y0', metavar='Y0', type=str, help='Coordenada Y inicial')
 parser.add_argument('Z0', metavar='Z0', type=str, help='Coordenada Z inicial')
