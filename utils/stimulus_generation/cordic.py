@@ -12,7 +12,7 @@ class cordic():
         self.angle_fractional_width = angle_fractional_width
         self.angle_width = angle_integer_width + angle_fractional_width
         self.pure_cordic_scale_factor = 0.607252935
-        self.rounded_cordic_scale_factor = int(round(self.pure_cordic_scale_factor*2**(coords_width+offset_coords_width-1)))*2**-(coords_width+offset_coords_width-1)
+        self.rounded_cordic_scale_factor = int(round(self.pure_cordic_scale_factor*2**(coords_width+offset_coords_width-1)))
         self.atan_degrees = [45,
         26.565051177078,
         14.0362434679265,
@@ -38,11 +38,10 @@ class cordic():
         
         X_old = X0
         Y_old = Y0
-        # Z es el valor de punto fijo del ángulo
+        # Z es el valor de punto fijo del ángulo, la parte entera más ceros en la parte fraccional
         Z_old = angle*2**self.angle_fractional_width
 
         for step in range(self.stages):
-
             try:
                 X, Y, Z = self.cordic_stage(X_old, Y_old, Z_old, self.atan_fixed_point[step], step)                
             except OverflowError:
@@ -52,17 +51,21 @@ class cordic():
             Y_old = Y
             Z_old = Z
 
-        X = self.floor_round(X*self.rounded_cordic_scale_factor)
-        Y = self.floor_round(Y*self.rounded_cordic_scale_factor)
+        # X*scale_factor es una multiplicación de enteros en complemento a dos, da otro nro comp. a 2 de 2N bits
+        # Como además está en representación punto fijo entre -1 y 1, nos quedamos con los primeros N bits, que son
+        # los bits más significativos
+        # tomar estos N bits lo representamos como multiplicar por 2**-N
+        # eso en binario es exacto, acá lo tenemos que redondear para abajo
+        X = self.floor_round(X*self.rounded_cordic_scale_factor*2**-(self.coords_width+self.offset_coords_width-1))
+        Y = self.floor_round(Y*self.rounded_cordic_scale_factor*2**-(self.coords_width+self.offset_coords_width-1))
 
         return X, Y
-    
+
     def cordic_stage(self, X0: int, Y0: int, Z0: int, atan: int, step: int):
         
         X = X0 - self.floor_round(Y0/(2**step)) if Z0 >= 0 else X0 + self.floor_round(Y0/(2**step))
         Y = Y0 + self.floor_round(X0/(2**step)) if Z0 >= 0 else Y0 - self.floor_round(X0/(2**step))
         Z = Z0 - atan if Z0 >= 0 else Z0 + atan
-        # if self.overflow(X, self.coords_width) or self.overflow(Y, self.coords_width) or self.overflow(Z, self.coords_width):
         if self.overflow(X, self.coords_width + self.offset_coords_width) or self.overflow(Y, self.coords_width + self.offset_coords_width) or self.overflow(Z, self.angle_width):
             raise OverflowError
 
@@ -90,7 +93,7 @@ def main():
     random.seed(54)
 
     # Number of test cases to generate
-    NUMBER_OF_TESTS = 1000
+    NUMBER_OF_TESTS = 10000
 
     # Width, in bits, of coordinates
     COORDINATES_WIDTH = 30
@@ -111,20 +114,24 @@ def main():
     with open(filepath, 'w') as fp:
 
         fp.write("# X0 Y0 angle X Y\n")
+        print(cordic_instace.pure_cordic_scale_factor)
+        print(cordic_instace.rounded_cordic_scale_factor)
 
         for _ in range(NUMBER_OF_TESTS):
 
+            # estas coordenas representan los puntos "reales"
+            # X0r = X0*2**-(COORDINATES_WIDTH-1)
+            # Y0r = Y0*2**-(COORDINATES_WIDTH-1)
             X0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
             Y0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
-            # el ángulo es número entero, el módulo se encarga de pasarlo a una representación de punto fijo
+            # el ángulo es un número entero, el módulo se encarga de pasarlo a una representación de punto fijo
             angle = random.randint(-90, 90)
 
             try:
                 X, Y = cordic_instace.rotate(X0, Y0, angle)
-
                 fp.write(f"{X0} {Y0} {angle} {X} {Y}\n")
             except OverflowError:
-                print('overflow ñero')
+                continue
 
 if __name__ == "__main__":
     main()
