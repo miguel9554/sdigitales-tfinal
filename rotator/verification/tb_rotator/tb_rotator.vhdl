@@ -13,6 +13,7 @@ architecture behavioral of tb_rotator is
     constant ANGLES_INTEGER_WIDTH       :   integer := 8;
     constant STAGES                     :   integer := 16;
     constant CLK_PERIOD                 :   time    := 50 ns;
+    constant CLK_HALF_PERIOD            :   time    := 25 ns;
 
     -- UUT (unit under test) declaration
     component rotator is
@@ -74,12 +75,10 @@ begin
             Z           =>  sActualZ
         );
     
-    sClk <= not sClk after CLK_PERIOD/2;
+    sClk <= not sClk after CLK_HALF_PERIOD/2;
 
     p_read : process
 
-        variable waiting: natural := 1;
-    
         -- Reading related variables
         file data_file              : text open read_mode is "verification/tb_rotator/stimulus.dat";
         variable text_line          : line;
@@ -228,7 +227,7 @@ begin
                 sYerrors    <=  sYerrors + 1;
             end if;
 
-            assert (sExpectedZ = sActualZ)      report "ERROR (Z): expected " & integer'image(to_integer(sExpectedY))       & ", got " & integer'image(to_integer(sActualY))        severity ERROR;
+            assert (sExpectedZ = sActualZ)      report "ERROR (Z): expected " & integer'image(to_integer(sExpectedZ))       & ", got " & integer'image(to_integer(sActualZ))        severity ERROR;
             if (sExpectedZ /= sActualZ) then
                 sZerrors    <=  sZerrors + 1;
             end if;
@@ -254,7 +253,7 @@ begin
         report "Total lines processed: " & integer'image(stotalReads);
         report "X errors: " & integer'image(sXerrors);
         report "Y errors: " & integer'image(sYerrors);
-        report "Z errors: " & integer'image(sYerrors);
+        report "Z errors: " & integer'image(sZerrors);
 
         wait for CLK_PERIOD; -- This wait has no function, it's here just to avoid the bug of ghdl not saving the last time event to the output waveform
 
