@@ -10,7 +10,9 @@ architecture behavioral of tb_cordic_stage is
 
     -- Constants
     constant WIDTH          :   integer := 10;
-    constant ANGLE_WIDTH    :   integer := 23;
+    constant ANGLE_INTEGER_WIDTH    :   integer := 8;
+    constant ANGLE_FRACTIONAL_WIDTH    :   integer := 16;
+    constant ANGLE_WIDTH: integer := ANGLE_INTEGER_WIDTH+ANGLE_FRACTIONAL_WIDTH;
     constant STEP_WIDTH     :   integer := 4;
     constant WAIT_TIME      :   time    := 50 ns;
 

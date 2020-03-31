@@ -59,6 +59,17 @@ class cordic():
 
         return X, Y
     
+    def cordic_stage(self, X0: int, Y0: int, Z0: int, atan: int, step: int):
+        
+        X = X0 - self.floor_round(Y0/(2**step)) if Z0 >= 0 else X0 + self.floor_round(Y0/(2**step))
+        Y = Y0 + self.floor_round(X0/(2**step)) if Z0 >= 0 else Y0 - self.floor_round(X0/(2**step))
+        Z = Z0 - atan if Z0 >= 0 else Z0 + atan
+        # if self.overflow(X, self.coords_width) or self.overflow(Y, self.coords_width) or self.overflow(Z, self.coords_width):
+        if self.overflow(X, self.coords_width + self.offset_coords_width) or self.overflow(Y, self.coords_width + self.offset_coords_width) or self.overflow(Z, self.angle_width):
+            raise OverflowError
+
+        return X, Y, Z
+    
     def rotate_3d(self, X0, Y0, Z0, angle_x, angle_y, angle_z):
 
         Y, Z = self.rotate(Y0, Z0, angle_x)
