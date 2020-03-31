@@ -42,9 +42,7 @@ def main():
             Y_angle = random.randint(-90, 90)
             Z_angle = random.randint(-90, 90)
 
-            Y, Z = cordic_instace.rotate(Y0, Z0, X_angle)
-            Z, X = cordic_instace.rotate(Z, X0, Y_angle)
-            X, Y = cordic_instace.rotate(X, Y, Z_angle)
+            X, Y, Z = cordic_instace.rotate_3d(X0, Y0, Z0, X_angle, Y_angle, Z_angle)
 
             fp.write(f"{X0} {Y0} {Z0} {X_angle} {Y_angle} {Z_angle} {X} {Y} {Z}\n")
 

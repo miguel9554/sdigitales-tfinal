@@ -58,6 +58,14 @@ class cordic():
         Y = self.floor_round(Y*self.rounded_cordic_scale_factor)
 
         return X, Y
+    
+    def rotate_3d(self, X0, Y0, Z0, angle_x, angle_y, angle_z):
+
+        Y, Z = self.rotate(Y0, Z0, angle_x)
+        Z, X = self.rotate(Z, X0, angle_y)
+        X, Y = self.rotate(X, Y, angle_z)
+
+        return X, Y, Z
 
     def overflow(self, number, width):
         if -2**(width-1) <= number <= 2**(width-1)-1:
