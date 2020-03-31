@@ -25,16 +25,34 @@ def matrix_rotation(X0: float, Y0: float, Z0: float, angle_X: int, angle_Y: int,
     return Vr[0], Vr[1], Vr[2]
 
 
-def parse_string_value(value: str):
-    fvalue = float(value)
-    if -1 < fvalue < 1:
-        return fvalue
+def parse_value(value: str, width: int):
+    if 'x' in value:
+        Vc = twos_complement(bin(int(value, 16)).split('b')[1])
+        Vr = Vc*2**-(width-1)
+    elif 'b' in value:
+        Vc = twos_complement(value.split('b')[1])
+        Vr = Vc*2**-(width-1)
     else:
-        exit('Las coordenadas tienen que estar entre -1 y 1')
+        Vr = float(value)
+        if not (-1 < Vr < 1):
+            exit('Las coordenadas tienen que estar entre -1 y 1')
+        Vc = int(Vr*2**(width-1))
+        
+    if not(-2**(width-1) <= Vc <= 2**(width-1)-1):
+        exit(f'Las coordenadas tienen que ser de {width} bits!')
+    
+    return Vr, Vc
+
 
 def parse_angle(value: str):
-    if -90 < int(value) < 90:
-        return int(value)
+    if 'x' in value:
+        angle = twos_complement(bin(int(value, 16)).split('b')[1])
+    elif 'b' in value:
+        angle = twos_complement(value.split('b')[1])
+    else:
+        angle = int(value)
+    if -90 < angle < 90:
+        return angle
     else:            
         exit('El ángulo tiene que estar entre -90 y 90')
 
@@ -48,7 +66,7 @@ def twos_complement(val_str):
     return int.from_bytes(b, byteorder='big', signed=True)
 
 
-parser = argparse.ArgumentParser(description='Rota tres coordenadas, útil para verificar validez de datos y conversion entre cantidad de bits.'
+parser = argparse.ArgumentParser(description='Rota tres coordenadas, útil para verificar validez de datos y conversion entre cantidad de bits.')
 parser.add_argument('X0', metavar='X0', type=str, help='Coordenada X inicial')
 parser.add_argument('Y0', metavar='Y0', type=str, help='Coordenada Y inicial')
 parser.add_argument('Z0', metavar='Z0', type=str, help='Coordenada Z inicial')
@@ -73,21 +91,16 @@ ANGLE_WIDTH = ANGLE_INTEGER_WIDTH + ANGLE_FRACTIONAL_WIDTH + 1
 cordic_instace = stimulus_generation.cordic.cordic(stages=STAGES, coords_width=COORDINATES_WIDTH, offset_coords_width=OFFSET_VHDL_COORDS_WIDTH, 
     angle_integer_width=ANGLE_INTEGER_WIDTH, angle_fractional_width=ANGLE_FRACTIONAL_WIDTH)
 
-# los valores que se encontrarían en el archivo de coordenadas
-X0r = parse_string_value(args.X0)
-Y0r = parse_string_value(args.Y0)
-Z0r = parse_string_value(args.Z0)
+# parseamos entrada, obtenemos valores enteros que van al cordic y su coordenada flotante
+X0r, X0c = parse_value(args.X0, COORDINATES_WIDTH)
+Y0r, Y0c = parse_value(args.Y0, COORDINATES_WIDTH)
+Z0r, Z0c = parse_value(args.Z0, COORDINATES_WIDTH)
 angle = parse_angle(args.angle)
 
 # en este caso, todos los ángulos son iguales
 angle_X = angle
 angle_Y = angle
 angle_Z = angle
-
-# los valores que le mando al cordic
-X0c = int(X0r*2**(COORDINATES_WIDTH-1))
-Y0c = int(Y0r*2**(COORDINATES_WIDTH-1))
-Z0c = int(Z0r*2**(COORDINATES_WIDTH-1))
 
 # los resultados que salen del cordic
 Xc, Yc, Zc = cordic_instace.rotate_3d(X0c, Y0c, Z0c, angle_X, angle_Y, angle_Z)
