@@ -43,11 +43,9 @@ class cordic():
 
         for step in range(self.stages):
 
-            X = X_old - self.floor_round(Y_old/(2**step)) if Z_old >= 0 else X_old + self.floor_round(Y_old/(2**step))
-            Y = Y_old + self.floor_round(X_old/(2**step)) if Z_old >= 0 else Y_old - self.floor_round(X_old/(2**step))
-            Z = Z_old - self.atan_fixed_point[step] if Z_old >= 0 else Z_old + self.atan_fixed_point[step]
-            # if self.overflow(X, self.coords_width) or self.overflow(Y, self.coords_width) or self.overflow(Z, self.coords_width):
-            if self.overflow(X, self.coords_width + self.offset_coords_width) or self.overflow(Y, self.coords_width + self.offset_coords_width) or self.overflow(Z, self.angle_width):
+            try:
+                X, Y, Z = self.cordic_stage(X_old, Y_old, Z_old, self.atan_fixed_point[step], step)                
+            except OverflowError:
                 raise OverflowError
 
             X_old = X
