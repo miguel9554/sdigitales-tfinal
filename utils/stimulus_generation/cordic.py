@@ -10,7 +10,7 @@ class cordic():
         self.offset_coords_width = offset_coords_width
         self.angle_integer_width = angle_integer_width
         self.angle_fractional_width = angle_fractional_width
-        self.angle_width = angle_integer_width + angle_fractional_width + 1
+        self.angle_width = angle_integer_width + angle_fractional_width
         self.pure_cordic_scale_factor = 0.607252935
         self.rounded_cordic_scale_factor = int(round(self.pure_cordic_scale_factor*2**(coords_width+offset_coords_width-1)))*2**-(coords_width+offset_coords_width-1)
         self.atan_degrees = [45,
