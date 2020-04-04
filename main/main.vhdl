@@ -316,9 +316,13 @@ begin
         end case;
     end process;
 
-    X0 <= signed(X_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH) & std_logic_vector(to_unsigned(0, CORDIC_OFFSET)));
-    Y0 <= signed(Y_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH) & std_logic_vector(to_unsigned(0, CORDIC_OFFSET)));
-    Z0 <= signed(Z_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH) & std_logic_vector(to_unsigned(0, CORDIC_OFFSET)));
+    -- Extendemos a la izquierda, no la derecha!!!
+    X0 <=   signed(std_logic_vector(to_unsigned(0, CORDIC_OFFSET)) & X_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH)) when X_coord_current(COORDS_WIDTH-1) = '0' else
+            signed(std_logic_vector(to_unsigned((2**CORDIC_OFFSET)-1, CORDIC_OFFSET)) & X_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH)) when X_coord_current(COORDS_WIDTH-1) = '1';
+    Y0 <=   signed(std_logic_vector(to_unsigned(0, CORDIC_OFFSET)) & Y_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH)) when Y_coord_current(COORDS_WIDTH-1) = '0' else
+            signed(std_logic_vector(to_unsigned((2**CORDIC_OFFSET)-1, CORDIC_OFFSET)) & Y_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH)) when Y_coord_current(COORDS_WIDTH-1) = '1';
+    Z0 <=   signed(std_logic_vector(to_unsigned(0, CORDIC_OFFSET)) & Z_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH)) when Z_coord_current(COORDS_WIDTH-1) = '0' else
+            signed(std_logic_vector(to_unsigned((2**CORDIC_OFFSET)-1, CORDIC_OFFSET)) & Z_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH)) when Z_coord_current(COORDS_WIDTH-1) = '1';
 
    -- instantiate rotator
     cordic_rotator: entity work.rotator
@@ -335,9 +339,9 @@ begin
     );
 
     -- Le aplicamos un offset a las coordenadas para poder trabajarlas como numeros sin signo
-    X_coord_rotated_offset <= std_logic_vector(X_coord_rotated(CORDIC_WIDTH+CORDIC_OFFSET-1 downto CORDIC_WIDTH+CORDIC_OFFSET-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
-    Y_coord_rotated_offset <= std_logic_vector(Y_coord_rotated(CORDIC_WIDTH+CORDIC_OFFSET-1 downto CORDIC_WIDTH+CORDIC_OFFSET-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
-    Z_coord_rotated_offset <= std_logic_vector(Z_coord_rotated(CORDIC_WIDTH+CORDIC_OFFSET-1 downto CORDIC_WIDTH+CORDIC_OFFSET-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+    X_coord_rotated_offset <= std_logic_vector(X_coord_rotated(CORDIC_WIDTH-1 downto CORDIC_WIDTH-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+    Y_coord_rotated_offset <= std_logic_vector(Y_coord_rotated(CORDIC_WIDTH-1 downto CORDIC_WIDTH-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+    Z_coord_rotated_offset <= std_logic_vector(Z_coord_rotated(CORDIC_WIDTH-1 downto CORDIC_WIDTH-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
     --X_coord_rotated_offset <= std_logic_vector(signed(X_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
     --Y_coord_rotated_offset <= std_logic_vector(signed(Y_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
     --Z_coord_rotated_offset <= std_logic_vector(signed(Z_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
