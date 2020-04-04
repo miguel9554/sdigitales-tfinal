@@ -18,8 +18,8 @@ end rotator_test;
 architecture behavioral of rotator_test is
 
     constant COORDS_WIDTH: integer := 8;
-    constant ANGLES_INTEGER_WIDTH: integer := 7;
-    constant COORDS_OFFSET: integer := 2;
+    constant ANGLES_INTEGER_WIDTH: integer := 8;
+    constant COORDS_OFFSET: integer := 20;
     constant STAGES: integer := 8;
 
     constant LEDS_STATE_IDLE: std_logic_vector(7 downto 0) := "10000001";
@@ -187,7 +187,7 @@ begin
                 if db_btn(3) = '1' then
                     register_next_tmp.angle := signed(sw(ANGLES_INTEGER_WIDTH-1 downto 0));
                     register_next_tmp.state := idle;
-                    register_next_tmp.leds := std_logic_vector(to_unsigned(0, 8-ANGLES_INTEGER_WIDTH)) & sw(ANGLES_INTEGER_WIDTH-1 downto 0);
+                    register_next_tmp.leds := sw(ANGLES_INTEGER_WIDTH-1 downto 0);
                 else
                     register_next_tmp.state := load_angle;
                 end if;
@@ -204,9 +204,9 @@ begin
                 register_next_tmp.state := idle;
                 register_next_tmp.leds := register_current.z;
             when read_angle =>
-                register_next_tmp.display_data := std_logic_vector(to_unsigned(0, 8-ANGLES_INTEGER_WIDTH)) & std_logic_vector(register_current.angle);
+                register_next_tmp.display_data := std_logic_vector(register_current.angle);
                 register_next_tmp.state := idle;
-                register_next_tmp.leds := std_logic_vector(to_unsigned(0, 8-ANGLES_INTEGER_WIDTH)) & std_logic_vector(register_current.angle);
+                register_next_tmp.leds := std_logic_vector(register_current.angle);
             when read_x_result =>
                 register_next_tmp.display_data := std_logic_vector(result_x(COORDS_WIDTH+COORDS_OFFSET-1 downto COORDS_OFFSET));
                 register_next_tmp.state := idle;
