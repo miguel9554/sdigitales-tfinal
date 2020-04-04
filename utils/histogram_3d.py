@@ -88,6 +88,7 @@ def main():
         Y_errors.append(abs(Ytarget-Yactual)/abs(Ytarget)*100)
         Z_errors.append(abs(Ztarget-Zactual)/abs(Ztarget)*100)
 
+    print(f"Se dieron {overflow_errors} errores de overflow")
     n, bins, patches = plt.hist([X_errors, Y_errors, Z_errors], range=(0,10), bins=100, label=['X', 'Y', 'Z'])
     plt.title("Errores del método CORDIC")
     plt.xlabel('Porcentaje de error')
