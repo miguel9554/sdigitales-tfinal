@@ -16,18 +16,9 @@ def main():
     # Width, in bits, of coordinates
     COORDINATES_WIDTH = 32
     # VHDL_COORDINATES_WIDTH - PYTHON_COORDINATES_WIDTH (how many more bits are used in the vhdl testbench)
-    OFFSET_VHDL_COORDS_WIDTH = 0
+    OFFSET_VHDL_COORDS_WIDTH = 2
 
-    # Width, in bits, of the integer part of angles
-    # queda en 8 para ir de -90 a 90 grados
-    ANGLE_INTEGER_WIDTH = 8
-    # Width, in bits, of the fractional part of angles
-    # esto tiene importancia nada más para la precisión de la atan, el ángulo de entrada no tiene parte fraccional
-    ANGLE_FRACTIONAL_WIDTH = 16
-    STAGES = 8
-
-    cordic_instace = stimulus_generation.cordic.cordic(stages=STAGES, coords_width=COORDINATES_WIDTH, offset_coords_width=OFFSET_VHDL_COORDS_WIDTH, 
-        angle_integer_width=ANGLE_INTEGER_WIDTH, angle_fractional_width=ANGLE_FRACTIONAL_WIDTH)
+    cordic_instace = stimulus_generation.cordic.cordic(coords_width=COORDINATES_WIDTH, offset_coords_width=OFFSET_VHDL_COORDS_WIDTH)
     
     overflow_errors = 0
 
@@ -61,8 +52,8 @@ def main():
         Y_errors.append(abs(Ytarget-Yactual)/abs(Ytarget)*100)
     
     print(f"Se dieron {overflow_errors} errores de overflow")
-    
-    n, bins, patches = plt.hist([X_errors, Y_errors], range=(0,10), bins=100, label=['X', 'Y'])
+
+    n, bins, patches = plt.hist([X_errors, Y_errors], range=(0,100), bins=100, label=['X', 'Y'])
     plt.title("Errores del método CORDIC")
     plt.xlabel('Porcentaje de error')
     plt.ylabel('Ocurrencias')
