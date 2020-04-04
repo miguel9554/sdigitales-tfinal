@@ -16,7 +16,8 @@ entity main is
         constant SQUARE_WIDTH_IN_BITS: integer := 9;
         constant LINES_TO_RECEIVE: natural := 11946;
         constant STAGES: integer := 8;
-        constant CYCLES_TO_WAIT_CORDIC: natural := 20
+        constant CYCLES_TO_WAIT_CORDIC: natural := 20;
+        constant CORDIC_OFFSET: natural := 5
     );
     port(
         clk: in std_logic;
@@ -111,15 +112,15 @@ architecture arch of main is
     signal Y_coord_current, Y_coord_next: std_logic_vector(COORDS_WIDTH-1 downto 0) := (others => '0');
     signal Z_coord_current, Z_coord_next: std_logic_vector(COORDS_WIDTH-1 downto 0) := (others => '0');
     -- Entradas del rotador
-    signal X0, Y0, Z0: signed(CORDIC_WIDTH-1 downto 0);
+    signal X0, Y0, Z0: signed(CORDIC_WIDTH+CORDIC_OFFSET-1 downto 0);
     -- Coordenadas rotadas
-    signal X_coord_rotated: signed(CORDIC_WIDTH-1 downto 0);
-    signal Y_coord_rotated: signed(CORDIC_WIDTH-1 downto 0);
-    signal Z_coord_rotated: signed(CORDIC_WIDTH-1 downto 0);
+    signal X_coord_rotated: signed(CORDIC_WIDTH+CORDIC_OFFSET-1 downto 0);
+    signal Y_coord_rotated: signed(CORDIC_WIDTH+CORDIC_OFFSET-1 downto 0);
+    signal Z_coord_rotated: signed(CORDIC_WIDTH+CORDIC_OFFSET-1 downto 0);
     -- Coordenadas rotadas y con offset
-    signal X_coord_rotated_offset: std_logic_vector(CORDIC_WIDTH-1 downto 0);
-    signal Y_coord_rotated_offset: std_logic_vector(CORDIC_WIDTH-1 downto 0);
-    signal Z_coord_rotated_offset: std_logic_vector(CORDIC_WIDTH-1 downto 0);
+    signal X_coord_rotated_offset: std_logic_vector(SQUARE_WIDTH_IN_BITS-1 downto 0);
+    signal Y_coord_rotated_offset: std_logic_vector(SQUARE_WIDTH_IN_BITS-1 downto 0);
+    signal Z_coord_rotated_offset: std_logic_vector(SQUARE_WIDTH_IN_BITS-1 downto 0);
     -- video ram
     signal video_ram_we_current, video_ram_we_next: std_logic := '0';
     signal pixel_current, pixel_next: std_logic_vector(0 downto 0) := (others => '0');
@@ -315,6 +316,34 @@ begin
         end case;
     end process;
 
+    X0 <= signed(X_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH) & std_logic_vector(to_unsigned(0, CORDIC_OFFSET)));
+    Y0 <= signed(Y_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH) & std_logic_vector(to_unsigned(0, CORDIC_OFFSET)));
+    Z0 <= signed(Z_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH) & std_logic_vector(to_unsigned(0, CORDIC_OFFSET)));
+
+   -- instantiate rotator
+    cordic_rotator: entity work.rotator
+    generic map(
+        COORDS_WIDTH=>CORDIC_WIDTH+CORDIC_OFFSET,
+        ANGLES_INTEGER_WIDTH=>ANGLE_WIDTH,
+        STAGES=>STAGES
+    )
+    port map(
+        clk=>clk,
+        X0=>X0, Y0=>Y0, Z0=>Z0,
+        angle_X=>to_signed(0, ANGLE_WIDTH), angle_Y=>to_signed(0, ANGLE_WIDTH), angle_Z=>to_signed(0, ANGLE_WIDTH),
+        X=>X_coord_rotated, Y=>Y_coord_rotated, Z=>Z_coord_rotated
+    );
+
+    -- Le aplicamos un offset a las coordenadas para poder trabajarlas como numeros sin signo
+    X_coord_rotated_offset <= std_logic_vector(X_coord_rotated(CORDIC_WIDTH+CORDIC_OFFSET-1 downto CORDIC_WIDTH+CORDIC_OFFSET-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+    Y_coord_rotated_offset <= std_logic_vector(Y_coord_rotated(CORDIC_WIDTH+CORDIC_OFFSET-1 downto CORDIC_WIDTH+CORDIC_OFFSET-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+    Z_coord_rotated_offset <= std_logic_vector(Z_coord_rotated(CORDIC_WIDTH+CORDIC_OFFSET-1 downto CORDIC_WIDTH+CORDIC_OFFSET-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+    --X_coord_rotated_offset <= std_logic_vector(signed(X_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+    --Y_coord_rotated_offset <= std_logic_vector(signed(Y_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+    --Z_coord_rotated_offset <= std_logic_vector(signed(Z_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
+
+    video_ram_write_address <= Z_coord_rotated_offset & Y_coord_rotated_offset;
+
     -- instantiate uart
     uart_unit: entity work.uart(str_arch)
     generic map(DVSR=>DVSR, DVSR_BIT=>DVSR_BIT)
@@ -417,35 +446,8 @@ begin
             addr_a=>video_ram_write_address, addr_b=>video_ram_read_address,
             din_a=>video_ram_data_in, dout_a=>open, dout_b=>video_ram_data_out);
 
-    video_ram_write_address <= Z_coord_rotated_offset & Y_coord_rotated_offset;
-
     -- leds
     Led <= leds_current;
-
-    X0 <= signed(X_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH));
-    Y0 <= signed(Y_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH));
-    Z0 <= signed(Z_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH));
-
-   -- instantiate rotator
-    cordic_rotator: entity work.rotator
-    generic map(
-        COORDS_WIDTH=>CORDIC_WIDTH,
-        ANGLES_INTEGER_WIDTH=>ANGLE_WIDTH,
-        STAGES=>STAGES
-    )
-    port map(
-        clk=>clk, X0=>X0, Y0=>Y0, Z0=>Z0,
-        angle_X=>to_signed(0, ANGLE_WIDTH), angle_Y=>to_signed(0, ANGLE_WIDTH), angle_Z=>to_signed(0, ANGLE_WIDTH),
-        X=>X_coord_rotated, Y=>Y_coord_rotated, Z=>Z_coord_rotated
-    );
-
-    -- Le aplicamos un offset a las coordenadas para poder trabajarlas como numeros sin signo
-    X_coord_rotated_offset <= std_logic_vector(X_coord_rotated(CORDIC_WIDTH-1 downto CORDIC_WIDTH-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
-    Y_coord_rotated_offset <= std_logic_vector(Y_coord_rotated(CORDIC_WIDTH-1 downto CORDIC_WIDTH-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
-    Z_coord_rotated_offset <= std_logic_vector(Z_coord_rotated(CORDIC_WIDTH-1 downto CORDIC_WIDTH-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
-    --X_coord_rotated_offset <= std_logic_vector(signed(X_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
-    --Y_coord_rotated_offset <= std_logic_vector(signed(Y_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
-    --Z_coord_rotated_offset <= std_logic_vector(signed(Z_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
 
 
 end arch;
