@@ -2,6 +2,11 @@ import serial
 import pathlib
 
 
+def bindigits(n, bits):
+    s = bin(n & int("1"*bits, 2))[2:]
+    return ("{0:0>%s}" % (bits)).format(s)
+
+
 COORDS_WIDTH = 32
 LINES_TO_SEND = 11946
 
@@ -24,4 +29,4 @@ with open(filepath) as fp, serial.Serial('/dev/ttyUSB0', 115200, timeout=1) as s
             ser.write((y).to_bytes(4, 'big', signed=y_signed))
             ser.write((z).to_bytes(4, 'big', signed=z_signed))
 
-            print(f"line {line_number} (mem_address: {line_number*6}): {hex(x)} {hex(y)} {hex(z)}")
+            print(f"line {line_number} (mem_address: {line_number*6}): {hex(int(bindigits(x, 32), 2))} {hex(int(bindigits(y, 32), 2))} {hex(int(bindigits(z, 32), 2))}")
