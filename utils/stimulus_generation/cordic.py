@@ -4,7 +4,7 @@ import pathlib
 
 class cordic():
     
-    def __init__(self, stages=16, coords_width=30, offset_coords_width=2, angle_integer_width=6, angle_fractional_width=16):
+    def __init__(self, stages=8, coords_width=30, offset_coords_width=2, angle_integer_width=8, angle_fractional_width=16):
         self.stages = stages
         self.coords_width = coords_width
         self.offset_coords_width = offset_coords_width
