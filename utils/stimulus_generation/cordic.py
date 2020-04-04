@@ -93,12 +93,12 @@ def main():
     random.seed(54)
 
     # Number of test cases to generate
-    NUMBER_OF_TESTS = 10000
+    NUMBER_OF_TESTS = 100
 
     # Width, in bits, of coordinates
     COORDINATES_WIDTH = 30
     # VHDL_COORDINATES_WIDTH - PYTHON_COORDINATES_WIDTH (how many more bits are used in the vhdl testbench)
-    OFFSET_VHDL_COORDS_WIDTH = 2
+    OFFSET_VHDL_COORDS_WIDTH = 0
 
     # Width, in bits, of the integer part of angles
     # queda en 8 para ir de -90 a 90 grados
@@ -114,24 +114,30 @@ def main():
     with open(filepath, 'w') as fp:
 
         fp.write("# X0 Y0 angle X Y\n")
-        print(cordic_instace.pure_cordic_scale_factor)
-        print(cordic_instace.rounded_cordic_scale_factor)
+        overflow_errors = 0
 
         for _ in range(NUMBER_OF_TESTS):
 
-            # estas coordenas representan los puntos "reales"
-            # X0r = X0*2**-(COORDINATES_WIDTH-1)
-            # Y0r = Y0*2**-(COORDINATES_WIDTH-1)
-            X0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
-            Y0 = random.randint(-2**(COORDINATES_WIDTH-1), 2**(COORDINATES_WIDTH-1)-1)
+            # las coordenadas "reales" a rotar
+            X0r = random.uniform(-1, 1)
+            Y0r = random.uniform(-1, 1)
+
+            # los valores que mandamos al cordic
+            # corresponden a una notación de punto fijo con COORDINATES_WIDTH-1 bits
+            X0c = int(X0r*2**(COORDINATES_WIDTH-1))
+            Y0c = int(Y0r*2**(COORDINATES_WIDTH-1))
+
             # el ángulo es un número entero, el módulo se encarga de pasarlo a una representación de punto fijo
             angle = random.randint(-90, 90)
 
             try:
-                X, Y = cordic_instace.rotate(X0, Y0, angle)
-                fp.write(f"{X0} {Y0} {angle} {X} {Y}\n")
+                X, Y = cordic_instace.rotate(X0c, Y0c, angle)
+                fp.write(f"{X0c} {Y0c} {angle} {X} {Y}\n")
             except OverflowError:
+                overflow_errors += 1
                 continue
+        
+        print(f"Overflows: {overflow_errors}")
 
 if __name__ == "__main__":
     main()
