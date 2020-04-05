@@ -11,7 +11,7 @@ entity main_inst is
                             -- DVSR = 25M/(16*baud rate) (está dividido el clock)
         constant DVSR_BIT: integer:=5; -- # bits of DVSR
         constant COORDS_WIDTH: integer := 32;
-        constant ANGLE_WIDTH: integer := 8;
+        constant ANGLE_WIDTH: integer := 10;
         -- ancho del cuadrado donde mostramos el mundo
         constant SQUARE_WIDTH_IN_BITS: integer := 9;
         constant LINES_TO_RECEIVE: natural := 11946;

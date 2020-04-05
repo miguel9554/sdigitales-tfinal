@@ -55,6 +55,7 @@ architecture arch of main is
 
     constant BYTES_TO_RECEIVE: natural := 12*LINES_TO_RECEIVE;
     constant CORDIC_WIDTH: integer := 24;
+    constant ANGLE_STEP: natural := 10;
     
     signal data_reg: std_logic_vector(7 downto 0);
     signal db_btn: std_logic_vector(3 downto 0);
@@ -109,10 +110,14 @@ architecture arch of main is
     signal X_coord_current, X_coord_next: std_logic_vector(COORDS_WIDTH-1 downto 0) := (others => '0');
     signal Y_coord_current, Y_coord_next: std_logic_vector(COORDS_WIDTH-1 downto 0) := (others => '0');
     signal Z_coord_current, Z_coord_next: std_logic_vector(COORDS_WIDTH-1 downto 0) := (others => '0');
-    -- ángulos
-    signal angle_x_current, angle_x_next: signed(ANGLE_WIDTH-1 downto 0) := (others => '0');
-    signal angle_y_current, angle_y_next: signed(ANGLE_WIDTH-1 downto 0) := (others => '0');
-    signal angle_z_current, angle_z_next: signed(ANGLE_WIDTH-1 downto 0) := (others => '0');
+    -- ángulos (van al cordic)
+    signal angle_X: signed(ANGLE_WIDTH-1 downto 0) := (others => '0');
+    signal angle_Y: signed(ANGLE_WIDTH-1 downto 0) := (others => '0');
+    signal angle_Z: signed(ANGLE_WIDTH-1 downto 0) := (others => '0');
+    -- ángulos (entre 0 y 360)
+    signal angle360_x_current, angle360_x_next: unsigned(ANGLE_WIDTH-1 downto 0) := (others => '0');
+    signal angle360_y_current, angle360_y_next: unsigned(ANGLE_WIDTH-1 downto 0) := (others => '0');
+    signal angle360_z_current, angle360_z_next: unsigned(ANGLE_WIDTH-1 downto 0) := (others => '0');
     -- Entradas del rotador
     signal X0, Y0, Z0: signed(CORDIC_WIDTH+CORDIC_OFFSET-1 downto 0);
     -- Coordenadas rotadas
@@ -153,14 +158,14 @@ begin
         Z_coord_current <= Z_coord_next;
         video_ram_we_current <= video_ram_we_next;
         hex_data_current <= hex_data_next;
-        angle_x_current <= angle_x_next;
-        angle_y_current <= angle_y_next;
-        angle_z_current <= angle_z_next;
         if (pixel_tick='1') then
             pixel_current <= pixel_next;
         end if;
         video_ram_data_in_current <= video_ram_data_in_next;
         video_ram_write_address_current <= video_ram_write_address_next;
+        angle360_x_current <= angle360_x_next;
+        angle360_y_current <= angle360_y_next;
+        angle360_z_current <= angle360_z_next;
     end if;
     end process;
 
@@ -320,21 +325,64 @@ begin
     end process;
 
     -- angles up-down counters
-    process(db_btn, sw, angle_x_current, angle_y_current, angle_z_current)
+    process(db_btn, sw, angle360_x_current, angle360_y_current, angle360_z_current)
     begin
+        angle360_x_next <= angle360_x_current;
+        angle360_y_next <= angle360_y_current;
+        angle360_z_next <= angle360_z_current;
         if db_btn(0) = '1' then
-            angle_z_next <= angle_z_current + 1;
+            if angle360_z_current >= to_unsigned(360-ANGLE_STEP, angle360_z_current'length) then
+                angle360_z_next <= angle360_z_current + ANGLE_STEP - to_unsigned(360, angle360_z_current'length);
+            else
+                angle360_z_next <= angle360_z_current + ANGLE_STEP;
+            end if;
         end if;
         if db_btn(1) = '1' then
-            angle_z_next <= angle_z_current - 1;
+            if angle360_z_current < to_unsigned(ANGLE_STEP, angle360_z_current'length) then
+                angle360_z_next <= to_unsigned(360, angle360_z_current'length) + angle360_z_current - ANGLE_STEP;
+            else
+                angle360_z_next <= angle360_z_current - ANGLE_STEP;
+            end if;
         end if;
-        if db_btn(2) = '1' then
-            angle_y_next <= angle_y_current + 1;
-        end if;
-        if db_btn(3) = '1' then
-            angle_y_next <= angle_y_current - 1;
+        if sw(0) = '0' then
+            if db_btn(2) = '1' then
+                if angle360_y_current >= to_unsigned(360-ANGLE_STEP, angle360_y_current'length) then
+                    angle360_y_next <= angle360_y_current + ANGLE_STEP - to_unsigned(360, angle360_y_current'length);
+                else
+                    angle360_y_next <= angle360_y_current + ANGLE_STEP;
+                end if;
+            end if;
+            if db_btn(3) = '1' then
+                if angle360_y_current < to_unsigned(ANGLE_STEP, angle360_y_current'length) then
+                    angle360_y_next <= to_unsigned(360, angle360_y_current'length) + angle360_y_current - ANGLE_STEP;
+                else
+                    angle360_y_next <= angle360_y_current - ANGLE_STEP;
+                end if;
+            end if;
+        elsif sw(0) = '1' then
+            if db_btn(2) = '1' then
+                if angle360_x_current >= to_unsigned(360-ANGLE_STEP, angle360_x_current'length) then
+                    angle360_x_next <= angle360_x_current + ANGLE_STEP - to_unsigned(360, angle360_x_current'length);
+                else
+                    angle360_x_next <= angle360_x_current + ANGLE_STEP;
+                end if;
+            end if;
+            if db_btn(3) = '1' then
+                if angle360_x_current < to_unsigned(ANGLE_STEP, angle360_x_current'length) then
+                    angle360_x_next <= to_unsigned(360, angle360_x_current'length) + angle360_x_current - ANGLE_STEP;
+                else
+                    angle360_x_next <= angle360_x_current - ANGLE_STEP;
+                end if;
+            end if; 
         end if;
     end process;
+
+    angle_X <= -signed(to_unsigned(360, angle360_x_current'length) - angle360_x_current) when angle360_x_current > 180 else
+                signed(angle360_x_current);
+    angle_Y <= -signed(to_unsigned(360, angle360_y_current'length) - angle360_y_current) when angle360_y_current > 180 else
+                signed(angle360_y_current);
+    angle_Z <= -signed(to_unsigned(360, angle360_z_current'length) - angle360_z_current) when angle360_z_current > 180 else
+                signed(angle360_z_current);
 
     -- Extendemos a la izquierda, no la derecha!!!
     X0 <=   signed(std_logic_vector(to_unsigned(0, CORDIC_OFFSET)) & X_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-CORDIC_WIDTH)) when X_coord_current(COORDS_WIDTH-1) = '0' else
@@ -354,7 +402,7 @@ begin
     port map(
         clk=>clk,
         X0=>X0, Y0=>Y0, Z0=>Z0,
-        angle_X=>angle_x_current, angle_Y=>angle_y_current, angle_Z=>angle_z_current,
+        angle_X=>angle_X, angle_Y=>angle_Y, angle_Z=>angle_Z,
         X=>X_coord_rotated, Y=>Y_coord_rotated, Z=>Z_coord_rotated
     );
 
