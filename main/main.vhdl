@@ -13,7 +13,7 @@ entity main is
         constant COORDS_WIDTH: integer := 32;
         constant ANGLE_WIDTH: integer := 8;
         -- ancho del cuadrado donde mostramos el mundo
-        constant SQUARE_WIDTH_IN_BITS: integer := 9;
+        constant SQUARE_WIDTH_IN_BITS: integer := 8;
         constant LINES_TO_RECEIVE: natural := 11946;
         constant STAGES: integer := 8;
         constant CYCLES_TO_WAIT_CORDIC: natural := 20;
@@ -169,7 +169,8 @@ begin
     data_in_current, address_current, db_btn, cycles_current, reset, data_from_switch,
     bytes_received_current, leds_current, byte_position_current, coords_readed_current,
     X_coord_current, Y_coord_current, Z_coord_current, video_ram_we_current, ready,
-    mem_current, hex_data_current, data_out, Y_coord_rotated_offset, Z_coord_rotated_offset)
+    mem_current, hex_data_current, data_out, Y_coord_rotated_offset, Z_coord_rotated_offset,
+    video_ram_write_address_current)
     begin
         -- default values
         mem_next <= '0';
@@ -185,7 +186,7 @@ begin
         X_coord_next <= X_coord_current;
         Y_coord_next <= Y_coord_current;
         Z_coord_next <= Z_coord_current;
-        video_ram_we_next <= '1';
+        video_ram_we_next <= '0';
         hex_data_next <= hex_data_current;
         video_ram_data_in_next <= (others => '1');
         video_ram_write_address_next <= video_ram_write_address_current;
@@ -235,12 +236,24 @@ begin
             when read_from_sram =>
                 if coords_readed_current = LINES_TO_RECEIVE then
                     state_next <= clean_video_ram;
+                    video_ram_write_address_next <= (others => '0');
+                    video_ram_we_next <= '0';
+                    video_ram_data_in_next <= (others=> '0');
                     address_next <= 0;
                     coords_readed_next <= 0;
                 else
                     mem_next <= '1';
                     rw_next <= '1';
                     state_next <= waiting_for_sram_data;
+                end if;
+            when clean_video_ram =>
+                if video_ram_write_address_current = std_logic_vector(to_unsigned(2**(video_ram_write_address_current'length)-1, video_ram_write_address_current'length)) then
+                    state_next <= read_from_sram;
+                else
+                    state_next <= clean_video_ram;
+                    video_ram_write_address_next <= std_logic_vector(unsigned(video_ram_write_address_current) + to_unsigned(1, video_ram_data_in_current'length));
+                    video_ram_data_in_next <= (others=> '0');
+                    video_ram_we_next <= '1';
                 end if;
             when waiting_for_sram_data =>
                 if mem_current = '1' then
@@ -301,22 +314,13 @@ begin
                 video_ram_we_next <= '1';
                 video_ram_write_address_next <= Z_coord_rotated_offset & Y_coord_rotated_offset;
                 state_next <= read_from_sram;
-            when clean_video_ram =>
-                if unsigned(video_ram_write_address_current) = to_unsigned(2**(2*SQUARE_WIDTH_IN_BITS), video_ram_write_address_current'length) then
-                    state_next <= read_from_sram;
-                else
-                    state_next <= clean_video_ram;
-                    video_ram_write_address_next <= std_logic_vector(signed(video_ram_write_address_current) + to_signed(1, video_ram_data_in_current'length));
-                    video_ram_data_in_next <= (others=> '0');
-                    video_ram_we_next <= '1';
-                end if;
             when idle =>
                 state_next <= idle;
         end case;
     end process;
 
     -- angles up-down counters
-    process(db_btn, sw)
+    process(db_btn, sw, angle_x_current, angle_y_current, angle_z_current)
     begin
         if db_btn(0) = '1' then
             angle_z_next <= angle_z_current + 1;
@@ -358,9 +362,6 @@ begin
     X_coord_rotated_offset <= std_logic_vector(X_coord_rotated(CORDIC_WIDTH-1 downto CORDIC_WIDTH-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
     Y_coord_rotated_offset <= std_logic_vector(Y_coord_rotated(CORDIC_WIDTH-1 downto CORDIC_WIDTH-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
     Z_coord_rotated_offset <= std_logic_vector(Z_coord_rotated(CORDIC_WIDTH-1 downto CORDIC_WIDTH-SQUARE_WIDTH_IN_BITS) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
-    --X_coord_rotated_offset <= std_logic_vector(signed(X_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
-    --Y_coord_rotated_offset <= std_logic_vector(signed(Y_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
-    --Z_coord_rotated_offset <= std_logic_vector(signed(Z_coord_current(COORDS_WIDTH-1 downto COORDS_WIDTH-SQUARE_WIDTH_IN_BITS)) + to_signed(-(2**(SQUARE_WIDTH_IN_BITS-1)), SQUARE_WIDTH_IN_BITS));
 
     video_ram_write_address <= Z_coord_rotated_offset & Y_coord_rotated_offset;
 
