@@ -54,7 +54,7 @@ end main;
 architecture arch of main is
 
     constant BYTES_TO_RECEIVE: natural := 12*LINES_TO_RECEIVE;
-    constant CORDIC_WIDTH: integer := SQUARE_WIDTH_IN_BITS;
+    constant CORDIC_WIDTH: integer := 24;
     
     signal data_reg: std_logic_vector(7 downto 0);
     signal db_btn: std_logic_vector(3 downto 0);
@@ -81,10 +81,8 @@ architecture arch of main is
     signal data_out: std_logic_vector(DATA_WIDTH-1 downto 0);
 
     -- video ram
-    signal video_ram_data_in: std_logic_vector(0 downto 0) := (others => '1');
     signal video_ram_data_out: std_logic_vector(0 downto 0);
     signal video_ram_read_address: std_logic_vector(SQUARE_WIDTH_IN_BITS*2-1 downto 0) := (others => '0');
-    signal video_ram_write_address: std_logic_vector(SQUARE_WIDTH_IN_BITS*2-1 downto 0) := (others => '0');
 
     -- uart
     signal tx_full, rx_empty: std_logic := '0';
@@ -93,7 +91,7 @@ architecture arch of main is
     -- state machine
     type state_t is (initial_state, read_from_sram, waiting_for_uart,
     reading_from_uart, write_sram, waiting_for_sram, uart_end_data_reception,
-    waiting_for_sram_data, idle, process_coords, print_coords, read_with_switch);
+    waiting_for_sram_data, idle, process_coords, print_coords, clean_video_ram);
     signal state_current, state_next : state_t := initial_state;
     signal address_current, address_next: natural := 0;
     signal mem_current, mem_next: std_logic := '0';
@@ -103,7 +101,7 @@ architecture arch of main is
     signal cycles_current, cycles_next: natural := CYCLES_TO_WAIT;
     signal bytes_received_current, bytes_received_next: natural := 0;
     signal leds_current, leds_next: std_logic_vector(7 downto 0) := (others => '0');
-    -- Esta variable representa cuantas coordenadas leímos de la SRAM
+    -- Esta variable representa cuantas coordenadas leÃ­mos de la SRAM
     signal coords_readed_current, coords_readed_next: natural := 0;
     -- Esta variable representa en que byte estamos de la coordenada, sirve para decodificar si estamos en X, Y o Z
     signal byte_position_current, byte_position_next: natural := 0;
@@ -111,6 +109,10 @@ architecture arch of main is
     signal X_coord_current, X_coord_next: std_logic_vector(COORDS_WIDTH-1 downto 0) := (others => '0');
     signal Y_coord_current, Y_coord_next: std_logic_vector(COORDS_WIDTH-1 downto 0) := (others => '0');
     signal Z_coord_current, Z_coord_next: std_logic_vector(COORDS_WIDTH-1 downto 0) := (others => '0');
+    -- ángulos
+    signal angle_x_current, angle_x_next: signed(ANGLE_WIDTH-1 downto 0) := (others => '0');
+    signal angle_y_current, angle_y_next: signed(ANGLE_WIDTH-1 downto 0) := (others => '0');
+    signal angle_z_current, angle_z_next: signed(ANGLE_WIDTH-1 downto 0) := (others => '0');
     -- Entradas del rotador
     signal X0, Y0, Z0: signed(CORDIC_WIDTH+CORDIC_OFFSET-1 downto 0);
     -- Coordenadas rotadas
@@ -124,6 +126,9 @@ architecture arch of main is
     -- video ram
     signal video_ram_we_current, video_ram_we_next: std_logic := '0';
     signal pixel_current, pixel_next: std_logic_vector(0 downto 0) := (others => '0');
+    signal video_ram_data_in_current, video_ram_data_in_next: std_logic_vector(0 downto 0) := (others => '1');
+    signal video_ram_write_address_current, video_ram_write_address_next: std_logic_vector(SQUARE_WIDTH_IN_BITS*2-1 downto 0) := (others => '0');
+    signal video_ram_write_address: std_logic_vector(SQUARE_WIDTH_IN_BITS*2-1 downto 0) := (others => '0');
 
 
 begin
@@ -148,12 +153,14 @@ begin
         Z_coord_current <= Z_coord_next;
         video_ram_we_current <= video_ram_we_next;
         hex_data_current <= hex_data_next;
-        if (db_btn(0)='1') then
-            data_from_switch <= sw;
-        end if;
+        angle_x_current <= angle_x_next;
+        angle_y_current <= angle_y_next;
+        angle_z_current <= angle_z_next;
         if (pixel_tick='1') then
             pixel_current <= pixel_next;
         end if;
+        video_ram_data_in_current <= video_ram_data_in_next;
+        video_ram_write_address_current <= video_ram_write_address_next;
     end if;
     end process;
 
@@ -162,7 +169,7 @@ begin
     data_in_current, address_current, db_btn, cycles_current, reset, data_from_switch,
     bytes_received_current, leds_current, byte_position_current, coords_readed_current,
     X_coord_current, Y_coord_current, Z_coord_current, video_ram_we_current, ready,
-    mem_current, hex_data_current, data_out)
+    mem_current, hex_data_current, data_out, Y_coord_rotated_offset, Z_coord_rotated_offset)
     begin
         -- default values
         mem_next <= '0';
@@ -178,8 +185,10 @@ begin
         X_coord_next <= X_coord_current;
         Y_coord_next <= Y_coord_current;
         Z_coord_next <= Z_coord_current;
-        video_ram_we_next <= '0';
+        video_ram_we_next <= '1';
         hex_data_next <= hex_data_current;
+        video_ram_data_in_next <= (others => '1');
+        video_ram_write_address_next <= video_ram_write_address_current;
         case state_current is
             when initial_state =>
                 if cycles_current = 0 then
@@ -225,7 +234,9 @@ begin
                 address_next <= 0;
             when read_from_sram =>
                 if coords_readed_current = LINES_TO_RECEIVE then
-                    state_next <= idle;
+                    state_next <= clean_video_ram;
+                    address_next <= 0;
+                    coords_readed_next <= 0;
                 else
                     mem_next <= '1';
                     rw_next <= '1';
@@ -233,7 +244,7 @@ begin
                 end if;
             when waiting_for_sram_data =>
                 if mem_current = '1' then
-                    -- así evitamos el glitch de ready en el primer ciclo de lectura
+                    -- así­ evitamos el glitch de ready en el primer ciclo de lectura
                     state_next <= waiting_for_sram_data;
                 elsif ready = '1' then
                     -- asignamos el valor a la coordenada correspondiente
@@ -288,32 +299,37 @@ begin
             when print_coords =>
                 -- ya estan las coordenadas a escribir cargadas, escribo
                 video_ram_we_next <= '1';
+                video_ram_write_address_next <= Z_coord_rotated_offset & Y_coord_rotated_offset;
                 state_next <= read_from_sram;
-            when idle =>
-                hex_data_next <= "0101" & "0101" & "0101" & "0101";
-                state_next <= read_with_switch;
-            when read_with_switch =>
-                hex_data_next <= data_out;
-                address_next <= to_integer(unsigned("0000000000000000" & sw));
-                if db_btn(1)='1' then -- write
-                    mem_next <= '1';
-                    rw_next <= '0';
-                    data_in_next <= "00000000" & data_from_switch;
-                    state_next <= read_with_switch;
-                elsif db_btn(2)='1' then -- read
-                    mem_next <= '1';
-                    rw_next <= '1';
-                    state_next <= read_with_switch;
-                elsif db_btn(3)='1' then
-                    mem_next <= '0';
-                    rw_next <= '1';
-                    state_next <= waiting_for_uart;
+            when clean_video_ram =>
+                if unsigned(video_ram_write_address_current) = to_unsigned(2**(2*SQUARE_WIDTH_IN_BITS), video_ram_write_address_current'length) then
+                    state_next <= read_from_sram;
                 else
-                    mem_next <= '0';
-                    rw_next <= '1';
-                    state_next <= read_with_switch;
+                    state_next <= clean_video_ram;
+                    video_ram_write_address_next <= std_logic_vector(signed(video_ram_write_address_current) + to_signed(1, video_ram_data_in_current'length));
+                    video_ram_data_in_next <= (others=> '0');
+                    video_ram_we_next <= '1';
                 end if;
+            when idle =>
+                state_next <= idle;
         end case;
+    end process;
+
+    -- angles up-down counters
+    process(db_btn, sw)
+    begin
+        if db_btn(0) = '1' then
+            angle_z_next <= angle_z_current + 1;
+        end if;
+        if db_btn(1) = '1' then
+            angle_z_next <= angle_z_current - 1;
+        end if;
+        if db_btn(2) = '1' then
+            angle_y_next <= angle_y_current + 1;
+        end if;
+        if db_btn(3) = '1' then
+            angle_y_next <= angle_y_current - 1;
+        end if;
     end process;
 
     -- Extendemos a la izquierda, no la derecha!!!
@@ -334,7 +350,7 @@ begin
     port map(
         clk=>clk,
         X0=>X0, Y0=>Y0, Z0=>Z0,
-        angle_X=>to_signed(0, ANGLE_WIDTH), angle_Y=>to_signed(0, ANGLE_WIDTH), angle_Z=>to_signed(0, ANGLE_WIDTH),
+        angle_X=>angle_x_current, angle_Y=>angle_y_current, angle_Z=>angle_z_current,
         X=>X_coord_rotated, Y=>Y_coord_rotated, Z=>Z_coord_rotated
     );
 
@@ -447,8 +463,8 @@ begin
         generic map(ADDR_WIDTH=>SQUARE_WIDTH_IN_BITS*2, DATA_WIDTH=>1)
         port map(
             clk=>clk, we=>video_ram_we_current,
-            addr_a=>video_ram_write_address, addr_b=>video_ram_read_address,
-            din_a=>video_ram_data_in, dout_a=>open, dout_b=>video_ram_data_out);
+            addr_a=>video_ram_write_address_current, addr_b=>video_ram_read_address,
+            din_a=>video_ram_data_in_current, dout_a=>open, dout_b=>video_ram_data_out);
 
     -- leds
     Led <= leds_current;
