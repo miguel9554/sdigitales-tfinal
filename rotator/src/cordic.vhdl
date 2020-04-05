@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 entity cordic is
     generic (
         COORDS_WIDTH            : integer := 10;
-        ANGLES_INTEGER_WIDTH    : integer := 7;
+        ANGLES_INTEGER_WIDTH    : integer := 8;
         STAGES                  : integer := 16
     );
     port (
@@ -75,6 +75,11 @@ architecture behavioral of cordic is
     signal sX_multiplication_buffer     :   signed(2*COORDS_WIDTH-1 downto 0)   := (others => '0');
     signal sY_multiplication_buffer     :   signed(2*COORDS_WIDTH-1 downto 0)   := (others => '0');
 
+    -- 
+    signal Xt: signed(COORDS_WIDTH-1 downto 0) := (others => '0');
+    signal Yt: signed(COORDS_WIDTH-1 downto 0) := (others => '0');
+    signal anglet: signed(ANGLES_INTEGER_WIDTH-1 downto 0) := (others => '0');
+
     -- Cordic scale factor
     signal sCordic_scale_factor :   signed(COORDS_WIDTH-1 downto 0) := to_signed(integer(CORDIC_SCALE_FACTOR*real(2**(COORDS_WIDTH-1))), COORDS_WIDTH);
 
@@ -83,7 +88,7 @@ begin
     -- Inputs initialization
     sX_array(0)     <=  X0;
     sY_array(0)     <=  Y0;
-    sZ_array(0)     <=  signed(std_logic_vector(angle) & std_logic_vector(to_unsigned(0, ANGLES_FRACTIONAL_WIDTH)));
+    sZ_array(0)     <=  signed(std_logic_vector(anglet) & std_logic_vector(to_unsigned(0, ANGLES_FRACTIONAL_WIDTH)));
 
     stages_instantiation: for i in 0 to STAGES-1 generate
 
@@ -112,7 +117,24 @@ begin
 
     -- Outputs assignement
     -- Buffer has 2 bits for integer part, we only want one and the rest of fractional bits we can fit
-    X    <=  sX_multiplication_buffer(2*COORDS_WIDTH-2 downto COORDS_WIDTH-1);
-    Y    <=  sY_multiplication_buffer(2*COORDS_WIDTH-2 downto COORDS_WIDTH-1);
+    Xt    <=  sX_multiplication_buffer(2*COORDS_WIDTH-2 downto COORDS_WIDTH-1);
+    Yt    <=  sY_multiplication_buffer(2*COORDS_WIDTH-2 downto COORDS_WIDTH-1);
+
+    angle_decode: process(angle, Xt, Yt)
+    begin
+        if angle < to_signed(-90, angle'length) then
+            anglet <= angle + to_signed(90, angle'length);
+            X <= -Yt;
+            Y <= Xt;
+        elsif angle > to_signed(90, angle'length) then
+            anglet <= angle - to_signed(90, angle'length);
+            X <= -Yt;
+            Y <= Xt;
+        else
+            anglet <= angle;
+            X <= Xt;
+            Y <= Yt;
+        end if;            
+    end process;
 
 end architecture behavioral;
